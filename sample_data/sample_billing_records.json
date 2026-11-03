@@ -1,0 +1,44 @@
+[
+  {
+    "provider": "AWS",
+    "accountId": "123456789012",
+    "serviceName": "Amazon Elastic Compute Cloud (EC2)",
+    "region": "us-east-1",
+    "costAmount": 1420.50,
+    "currency": "USD",
+    "billingPeriodStart": "2026-10-01",
+    "billingPeriodEnd": "2026-10-31",
+    "tags": {
+      "Environment": "Production",
+      "Team": "Core-Backend"
+    }
+  },
+  {
+    "provider": "AWS",
+    "accountId": "123456789012",
+    "serviceName": "Amazon Relational Database Service (RDS)",
+    "region": "us-east-1",
+    "costAmount": 860.25,
+    "currency": "USD",
+    "billingPeriodStart": "2026-10-01",
+    "billingPeriodEnd": "2026-10-31",
+    "tags": {
+      "Environment": "Production",
+      "Database": "MySQL-Cluster"
+    }
+  },
+  {
+    "provider": "GCP",
+    "accountId": "gcp-production-9876",
+    "serviceName": "Google Kubernetes Engine (GKE)",
+    "region": "us-central1",
+    "costAmount": 2150.00,
+    "currency": "USD",
+    "billingPeriodStart": "2026-10-01",
+    "billingPeriodEnd": "2026-10-31",
+    "tags": {
+      "Cluster": "prod-k8s-cluster",
+      "Owner": "DevOps"
+    }
+  }
+]
