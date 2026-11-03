@@ -1,0 +1,20 @@
+provider,account_id,service_name,region,cost_amount,currency,usage_type,usage_quantity,usage_unit,billing_period_start,billing_period_end,resource_id
+AWS,123456789012,Amazon EC2,us-east-1,1425.5000,USD,BoxUsage:t3.xlarge,720.0000,Hrs,2026-05-01,2026-05-31,i-0123456789abcdef0
+AWS,123456789012,Amazon RDS,us-east-1,980.2000,USD,InstanceUsage:db.r5.large,720.0000,Hrs,2026-05-01,2026-05-31,rds-prod-primary-01
+AWS,123456789012,Amazon S3,us-east-1,340.7500,USD,StandardStorage,15420.0000,GB-Mo,2026-05-01,2026-05-31,arn:aws:s3:::prod-data-lake
+AWS,123456789012,AWS Lambda,us-east-1,120.4000,USD,RequestDuration,12500000.0000,GB-s,2026-05-01,2026-05-31,arn:aws:lambda:us-east-1:fn-ingest
+AWS,123456789012,Amazon CloudFront,global,215.1000,USD,DataTransfer-Out-Bytes,4500.0000,GB,2026-05-01,2026-05-31,cf-dist-e283921
+AZURE,sub-azure-5544-22,Virtual Machines,eastus,1850.0000,USD,Standard_D4s_v5,1440.0000,Hours,2026-05-01,2026-05-31,vm-core-api-eastus
+AZURE,sub-azure-5544-22,Azure SQL Database,eastus,890.6000,USD,GeneralPurpose_Gen5_4,720.0000,Hours,2026-05-01,2026-05-31,sql-prod-db-01
+AZURE,sub-azure-5544-22,Storage Accounts,eastus,310.2500,USD,Standard_LRS_Hot,12000.0000,GB,2026-05-01,2026-05-31,saenterpriseblob01
+AZURE,sub-azure-5544-22,Azure Kubernetes Service,eastus,640.0000,USD,SystemNodePool,720.0000,Hours,2026-05-01,2026-05-31,aks-cluster-prod
+GCP,gcp-production-9876,Compute Engine,us-central1,1240.8000,USD,n2-standard-4,720.0000,Hours,2026-05-01,2026-05-31,inst-gcp-worker-01
+GCP,gcp-production-9876,Cloud Storage,us-central1,280.5000,USD,StandardStorage,11200.0000,GB-Mo,2026-05-01,2026-05-31,gcp-analytics-bucket
+GCP,gcp-production-9876,Cloud SQL,us-central1,750.3000,USD,db-custom-4-16384,720.0000,Hours,2026-05-01,2026-05-31,sql-gcp-reporting
+GCP,gcp-production-9876,BigQuery,us-central1,620.9000,USD,AnalysisBytes,125.0000,TB,2026-05-01,2026-05-31,bq-dataset-telemetry
+AWS,123456789012,Amazon EC2,us-east-1,1390.0000,USD,BoxUsage:t3.xlarge,720.0000,Hrs,2026-06-01,2026-06-30,i-0123456789abcdef0
+AWS,123456789012,Amazon RDS,us-east-1,1020.0000,USD,InstanceUsage:db.r5.large,720.0000,Hrs,2026-06-01,2026-06-30,rds-prod-primary-01
+AZURE,sub-azure-5544-22,Virtual Machines,eastus,1910.5000,USD,Standard_D4s_v5,1440.0000,Hours,2026-06-01,2026-06-30,vm-core-api-eastus
+AZURE,sub-azure-5544-22,Azure Kubernetes Service,eastus,680.0000,USD,SystemNodePool,720.0000,Hours,2026-06-01,2026-06-30,aks-cluster-prod
+GCP,gcp-production-9876,Compute Engine,us-central1,1310.0000,USD,n2-standard-4,720.0000,Hours,2026-06-01,2026-06-30,inst-gcp-worker-01
+GCP,gcp-production-9876,BigQuery,us-central1,710.2000,USD,AnalysisBytes,140.0000,TB,2026-06-01,2026-06-30,bq-dataset-telemetry

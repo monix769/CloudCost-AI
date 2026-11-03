@@ -15,6 +15,8 @@ import java.net.UnknownHostException;
  * Intelligent Cloud Cost Monitoring &amp; FinOps Analytics Platform.
  */
 @SpringBootApplication
+@org.springframework.data.web.config.EnableSpringDataWebSupport(
+        pageSerializationMode = org.springframework.data.web.config.EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO)
 public class CloudCostAiApplication {
 
     private static final Logger log = LoggerFactory.getLogger(CloudCostAiApplication.class);

@@ -45,11 +45,10 @@ public class SecurityConfig {
 
                 // Configure endpoint authorization
                 .authorizeHttpRequests(auth -> auth
-                        // Milestone 1 Public Endpoints
+                        // Milestone 3 API Endpoints, Public Discovery & Swagger Docs
                         .requestMatchers(
                                 "/",
-                                "/api/health",
-                                "/api/status",
+                                "/api/**",
                                 "/actuator/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
@@ -57,7 +56,7 @@ public class SecurityConfig {
                                 "/error"
                         ).permitAll()
 
-                        // All other future endpoints require authentication
+                        // All other endpoints require authentication
                         .anyRequest().authenticated()
                 );
 

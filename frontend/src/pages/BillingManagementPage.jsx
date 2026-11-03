@@ -1,84 +1,96 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import RecentBillingTable from '../components/RecentBillingTable';
-import DemoDataDisclaimer from '../components/DemoDataDisclaimer';
-import { FileText, Download, CheckCircle, CreditCard, ArrowDownRight, Layers } from 'lucide-react';
+import billingService from '../services/billingService';
+import { UploadCloud, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 
 export default function BillingManagementPage() {
-  const [downloading, setDownloading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadResult, setUploadResult] = useState(null);
+  const [uploadError, setUploadError] = useState(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const fileInputRef = useRef(null);
 
-  const invoices = [
-    { id: 'INV-2026-11', period: 'Nov 1 - Nov 30, 2026 (MTD)', amount: 42850.20, status: 'PROCESSING', dueDate: 'Dec 05, 2026' },
-    { id: 'INV-2026-10', period: 'Oct 1 - Oct 31, 2026', amount: 45600.00, status: 'PAID', dueDate: 'Nov 05, 2026' },
-    { id: 'INV-2026-09', period: 'Sep 1 - Sep 30, 2026', amount: 43300.00, status: 'PAID', dueDate: 'Oct 05, 2026' },
-  ];
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-  const handleDownloadCsv = () => {
-    setDownloading(true);
-    setTimeout(() => {
-      setDownloading(false);
-      alert('Billing CSV Export: Sample invoice dataset downloaded successfully.');
-    }, 1000);
+    try {
+      setUploading(true);
+      setUploadError(null);
+      setUploadResult(null);
+
+      const res = await billingService.uploadBillingCsv(file);
+      setUploadResult(res);
+      setRefreshTrigger((prev) => prev + 1);
+    } catch (err) {
+      setUploadError(err.message || 'Failed to upload and parse CSV billing file');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
   };
 
   return (
     <div className="space-y-6 animate-fadeIn">
-      <DemoDataDisclaimer />
-
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
         <div>
           <h2 className="text-xl font-bold text-white flex items-center space-x-2">
-            <span>Invoices &amp; Billing Records</span>
+            <span>Billing Records &amp; Ingestion</span>
           </h2>
           <p className="text-xs text-slate-400 mt-1">
-            Aggregated monthly statements and itemized cloud infrastructure billing logs
+            Persisted MySQL billing records, RFC-4180 CSV parser, and line-item expenditure activity
           </p>
         </div>
 
-        <button
-          onClick={handleDownloadCsv}
-          disabled={downloading}
-          className="inline-flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20 transition-all self-start sm:self-auto"
-        >
-          <Download className={`w-4 h-4 ${downloading ? 'animate-bounce' : ''}`} />
-          <span>{downloading ? 'Generating CSV...' : 'Download Billing Export (CSV)'}</span>
-        </button>
+        <div>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept=".csv"
+            className="hidden"
+            id="csv-upload-input"
+          />
+          <label
+            htmlFor="csv-upload-input"
+            className={`cursor-pointer inline-flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20 transition-all ${
+              uploading ? 'opacity-70 pointer-events-none' : ''
+            }`}
+          >
+            {uploading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <UploadCloud className="w-4 h-4" />
+            )}
+            <span>{uploading ? 'Processing CSV...' : 'Upload Billing CSV'}</span>
+          </label>
+        </div>
       </div>
 
-      {/* Invoice Statements Strip */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {invoices.map((inv) => (
-          <div key={inv.id} className="glass-panel rounded-2xl p-5 border border-white/[0.08] space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-mono font-bold text-blue-400">{inv.id}</span>
-              <span
-                className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${
-                  inv.status === 'PAID'
-                    ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
-                    : 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
-                }`}
-              >
-                {inv.status}
-              </span>
-            </div>
-
-            <div>
-              <p className="text-2xl font-extrabold font-mono text-white">
-                ${inv.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-              </p>
-              <p className="text-xs text-slate-400 mt-0.5">{inv.period}</p>
-            </div>
-
-            <div className="pt-2 border-t border-slate-800/80 flex justify-between items-center text-[11px] text-slate-400 font-mono">
-              <span>Due: {inv.dueDate}</span>
-              <button className="text-blue-400 hover:underline">View PDF</button>
-            </div>
+      {/* Upload result alert */}
+      {uploadResult && (
+        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs space-y-1">
+          <div className="flex items-center space-x-2 font-semibold">
+            <CheckCircle className="w-4 h-4" />
+            <span>CSV Upload Complete</span>
           </div>
-        ))}
-      </div>
+          <p className="font-mono">{uploadResult.summary}</p>
+        </div>
+      )}
+
+      {/* Upload error alert */}
+      {uploadError && (
+        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center space-x-2">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>{uploadError}</span>
+        </div>
+      )}
 
       {/* Itemized Billing Table */}
-      <RecentBillingTable />
+      <RecentBillingTable refreshTrigger={refreshTrigger} />
     </div>
   );
 }

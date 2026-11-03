@@ -2,184 +2,847 @@
   "info": {
     "_postman_id": "7b8d4f12-0c9a-4e2b-b8c1-123456789abc",
     "name": "CloudCost AI – API Testing",
-    "description": "Comprehensive REST API test collection for CloudCost AI FinOps Platform (Milestone 1)",
+    "description": "Comprehensive REST API test collection for CloudCost AI FinOps Platform (Milestones 1, 2, & 3)",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "Root Endpoint",
-      "event": [
+      "name": "1. Health & Status",
+      "item": [
         {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test(\"Status code is 200 OK\", function () {",
-              "    pm.response.to.have.status(200);",
-              "});",
-              "",
-              "pm.test(\"Content-Type is application/json\", function () {",
-              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
-              "});",
-              "",
-              "pm.test(\"Root API envelope structure is valid\", function () {",
-              "    var jsonData = pm.response.json();",
-              "    pm.expect(jsonData).to.have.property(\"success\", true);",
-              "    pm.expect(jsonData).to.have.property(\"message\");",
-              "    pm.expect(jsonData).to.have.property(\"data\");",
-              "    pm.expect(jsonData).to.have.property(\"timestamp\");",
-              "});",
-              "",
-              "pm.test(\"Root metadata matches CloudCost AI platform\", function () {",
-              "    var jsonData = pm.response.json();",
-              "    pm.expect(jsonData.data.platform).to.eql(\"CloudCost AI\");",
-              "    pm.expect(jsonData.data.status).to.eql(\"ONLINE\");",
-              "    pm.expect(jsonData.data.endpoints).to.be.an(\"object\");",
-              "    pm.expect(jsonData.data.endpoints.health).to.eql(\"GET /api/health\");",
-              "    pm.expect(jsonData.data.endpoints.status).to.eql(\"GET /api/status\");",
-              "});"
-            ],
-            "type": "text/javascript"
+          "name": "Root Platform Discovery",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Envelope success is true\", function () { pm.expect(pm.response.json().success).to.be.true; });",
+                  "pm.test(\"Platform name is CloudCost AI\", function () { pm.expect(pm.response.json().data.platform).to.eql(\"CloudCost AI\"); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/"
+          }
+        },
+        {
+          "name": "System Health Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Health status is UP\", function () { pm.expect(pm.response.json().data.status).to.eql(\"UP\"); });",
+                  "pm.test(\"Database connectivity is CONNECTED\", function () { pm.expect(pm.response.json().data.database).to.eql(\"CONNECTED\"); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/health"
+          }
+        },
+        {
+          "name": "System Status Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Application name is CloudCost AI\", function () { pm.expect(pm.response.json().data.application).to.include(\"CloudCost AI\"); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/status"
           }
         }
-      ],
-      "request": {
-        "method": "GET",
-        "header": [
-          {
-            "key": "Accept",
-            "value": "application/json",
-            "type": "text"
-          }
-        ],
-        "url": {
-          "raw": "{{base_url}}/",
-          "host": [
-            "{{base_url}}"
-          ],
-          "path": [
-            ""
-          ]
-        },
-        "description": "Fetches root platform information, versioning, and primary endpoint discovery links."
-      },
-      "response": []
+      ]
     },
     {
-      "name": "Health Endpoint",
-      "event": [
+      "name": "2. Cloud Accounts",
+      "item": [
         {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test(\"Status code is 200 OK\", function () {",
-              "    pm.response.to.have.status(200);",
-              "});",
-              "",
-              "pm.test(\"Content-Type is application/json\", function () {",
-              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
-              "});",
-              "",
-              "pm.test(\"Health payload structure is valid\", function () {",
-              "    var jsonData = pm.response.json();",
-              "    pm.expect(jsonData).to.have.property(\"success\", true);",
-              "    pm.expect(jsonData.data).to.have.property(\"status\");",
-              "    pm.expect(jsonData.data).to.have.property(\"database\");",
-              "    pm.expect(jsonData.data).to.have.property(\"components\");",
-              "    pm.expect(jsonData.data).to.have.property(\"uptimeSeconds\");",
-              "});",
-              "",
-              "pm.test(\"Application status is UP and Database is CONNECTED\", function () {",
-              "    var jsonData = pm.response.json();",
-              "    pm.expect(jsonData.data.status).to.eql(\"UP\");",
-              "    pm.expect(jsonData.data.database).to.eql(\"CONNECTED\");",
-              "    pm.expect(jsonData.data.components.database.status).to.eql(\"UP\");",
-              "});"
+          "name": "List All Cloud Accounts",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Accounts list is an array\", function () { pm.expect(pm.response.json().data).to.be.an(\"array\"); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/cloud-accounts"
+          }
+        },
+        {
+          "name": "Filter Accounts by Provider (AWS)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });",
+                  "var data = pm.response.json().data;",
+                  "pm.expect(data).to.be.an(\"array\");",
+                  "if (data.length > 0) { pm.expect(data[0].provider).to.eql(\"AWS\"); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/cloud-accounts?provider=AWS"
+          }
+        },
+        {
+          "name": "Create Cloud Account (POST)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () { pm.response.to.have.status(201); });",
+                  "var jsonData = pm.response.json();",
+                  "pm.expect(jsonData.success).to.be.true;",
+                  "pm.expect(jsonData.data.id).to.not.be.null;",
+                  "pm.environment.set(\"created_account_id\", jsonData.data.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
-            "type": "text/javascript"
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"provider\": \"AWS\",\n  \"accountId\": \"test-acc-postman-{{$timestamp}}\",\n  \"accountName\": \"Postman Integration AWS Account\",\n  \"arnOrClientId\": \"arn:aws:iam::112233445566:role/FinOpsRole\",\n  \"isActive\": true\n}"
+            },
+            "url": "{{base_url}}/api/cloud-accounts"
+          }
+        },
+        {
+          "name": "Get Created Cloud Account by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });",
+                  "var jsonData = pm.response.json();",
+                  "pm.expect(jsonData.data.id).to.eql(pm.environment.get(\"created_account_id\"));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/cloud-accounts/{{created_account_id}}"
+          }
+        },
+        {
+          "name": "Update Cloud Account (PUT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });",
+                  "var jsonData = pm.response.json();",
+                  "pm.expect(jsonData.data.accountName).to.include(\"Updated\");"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"provider\": \"AWS\",\n  \"accountId\": \"test-acc-postman-updated\",\n  \"accountName\": \"Updated Postman Integration Account\",\n  \"arnOrClientId\": \"arn:aws:iam::112233445566:role/UpdatedFinOpsRole\",\n  \"isActive\": true\n}"
+            },
+            "url": "{{base_url}}/api/cloud-accounts/{{created_account_id}}"
+          }
+        },
+        {
+          "name": "Validation: Missing Fields Rejection (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Validation errors field returned\", function () { pm.expect(pm.response.json().validationErrors).to.not.be.undefined; });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"provider\": null,\n  \"accountId\": \"\",\n  \"accountName\": \"\"\n}"
+            },
+            "url": "{{base_url}}/api/cloud-accounts"
+          }
+        },
+        {
+          "name": "Missing Account Not Found (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404 Not Found\", function () { pm.response.to.have.status(404); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/cloud-accounts/999999"
+          }
+        },
+        {
+          "name": "Delete Created Cloud Account (DELETE)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Success flag is true\", function () { pm.expect(pm.response.json().success).to.be.true; });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/cloud-accounts/{{created_account_id}}"
           }
         }
-      ],
-      "request": {
-        "method": "GET",
-        "header": [
-          {
-            "key": "Accept",
-            "value": "application/json",
-            "type": "text"
-          }
-        ],
-        "url": {
-          "raw": "{{base_url}}/api/health",
-          "host": [
-            "{{base_url}}"
-          ],
-          "path": [
-            "api",
-            "health"
-          ]
-        },
-        "description": "Probes operational health of Spring Boot and MySQL 8 database connectivity."
-      },
-      "response": []
+      ]
     },
     {
-      "name": "Status Endpoint",
-      "event": [
+      "name": "3. Billing Management",
+      "item": [
         {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test(\"Status code is 200 OK\", function () {",
-              "    pm.response.to.have.status(200);",
-              "});",
-              "",
-              "pm.test(\"Content-Type is application/json\", function () {",
-              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
-              "});",
-              "",
-              "pm.test(\"Status payload structure is valid\", function () {",
-              "    var jsonData = pm.response.json();",
-              "    pm.expect(jsonData).to.have.property(\"success\", true);",
-              "    pm.expect(jsonData.data).to.have.property(\"application\");",
-              "    pm.expect(jsonData.data).to.have.property(\"javaVersion\");",
-              "    pm.expect(jsonData.data).to.have.property(\"springBootVersion\");",
-              "    pm.expect(jsonData.data).to.have.property(\"activeModules\");",
-              "    pm.expect(jsonData.data).to.have.property(\"memory\");",
-              "});",
-              "",
-              "pm.test(\"Runtime metadata matches expected specifications\", function () {",
-              "    var jsonData = pm.response.json();",
-              "    pm.expect(jsonData.data.application).to.include(\"CloudCost AI\");",
-              "    pm.expect(jsonData.data.activeModules).to.be.an(\"array\").that.is.not.empty;",
-              "    pm.expect(jsonData.data.memory.usedMemoryMb).to.be.a(\"number\");",
-              "});"
+          "name": "Get Paginated Billing Records",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });",
+                  "var jsonData = pm.response.json();",
+                  "pm.expect(jsonData.data.content).to.be.an(\"array\");"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/billing?page=0&size=10"
+          }
+        },
+        {
+          "name": "Filter Billing Records by Service",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });",
+                  "pm.expect(pm.response.json().data.content).to.be.an(\"array\");"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/billing?serviceName=EC2"
+          }
+        },
+        {
+          "name": "Create Individual Billing Record (POST)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () { pm.response.to.have.status(201); });",
+                  "var jsonData = pm.response.json();",
+                  "pm.expect(jsonData.data.id).to.not.be.null;",
+                  "pm.environment.set(\"created_billing_id\", jsonData.data.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
-            "type": "text/javascript"
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cloudAccountId\": 1,\n  \"serviceName\": \"Postman Mock Lambda\",\n  \"region\": \"us-east-1\",\n  \"costAmount\": 25.5000,\n  \"currency\": \"USD\",\n  \"usageType\": \"ExecutionDuration\",\n  \"usageQuantity\": 150000,\n  \"usageUnit\": \"Seconds\",\n  \"billingPeriodStart\": \"2026-05-01\",\n  \"billingPeriodEnd\": \"2026-05-31\"\n}"
+            },
+            "url": "{{base_url}}/api/billing"
+          }
+        },
+        {
+          "name": "Get Billing Record by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });",
+                  "var jsonData = pm.response.json();",
+                  "pm.expect(jsonData.data.id).to.eql(pm.environment.get(\"created_billing_id\"));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/billing/{{created_billing_id}}"
+          }
+        },
+        {
+          "name": "Validation: Date Range Inversion Rejection (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () { pm.response.to.have.status(400); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cloudAccountId\": 1,\n  \"serviceName\": \"Amazon EC2\",\n  \"region\": \"us-east-1\",\n  \"costAmount\": 100.00,\n  \"billingPeriodStart\": \"2026-06-30\",\n  \"billingPeriodEnd\": \"2026-06-01\"\n}"
+            },
+            "url": "{{base_url}}/api/billing"
+          }
+        },
+        {
+          "name": "Delete Billing Record (DELETE)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/billing/{{created_billing_id}}"
           }
         }
-      ],
-      "request": {
-        "method": "GET",
-        "header": [
-          {
-            "key": "Accept",
-            "value": "application/json",
-            "type": "text"
-          }
-        ],
-        "url": {
-          "raw": "{{base_url}}/api/status",
-          "host": [
-            "{{base_url}}"
+      ]
+    },
+    {
+      "name": "4. Cost Analytics",
+      "item": [
+        {
+          "name": "Get Overall Cost Summary",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });",
+                  "var data = pm.response.json().data;",
+                  "pm.expect(data.totalCost).to.not.be.undefined;",
+                  "pm.expect(data.currency).to.eql(\"USD\");",
+                  "pm.expect(data.totalRecords).to.be.a(\"number\");"
+                ],
+                "type": "text/javascript"
+              }
+            }
           ],
-          "path": [
-            "api",
-            "status"
-          ]
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/costs/summary"
+          }
         },
-        "description": "Returns detailed runtime diagnostics, memory meters, and active subsystems."
-      },
-      "response": []
+        {
+          "name": "Get Costs Grouped by Provider",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });",
+                  "var data = pm.response.json().data;",
+                  "pm.expect(data).to.be.an(\"array\");",
+                  "if (data.length > 0) {",
+                  "    pm.expect(data[0]).to.have.property(\"provider\");",
+                  "    pm.expect(data[0]).to.have.property(\"totalCost\");",
+                  "    pm.expect(data[0]).to.have.property(\"percentage\");",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/costs/by-provider"
+          }
+        },
+        {
+          "name": "Get Costs Grouped by Service (Top 5)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });",
+                  "var data = pm.response.json().data;",
+                  "pm.expect(data).to.be.an(\"array\");",
+                  "pm.expect(data.length).to.be.at.most(5);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/costs/by-service?limit=5"
+          }
+        },
+        {
+          "name": "Get Monthly Spend Trends",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });",
+                  "var data = pm.response.json().data;",
+                  "pm.expect(data).to.be.an(\"array\");",
+                  "if (data.length > 0) {",
+                  "    pm.expect(data[0]).to.have.property(\"period\");",
+                  "    pm.expect(data[0]).to.have.property(\"totalCost\");",
+                  "    pm.expect(data[0]).to.have.property(\"awsCost\");",
+                  "    pm.expect(data[0]).to.have.property(\"azureCost\");",
+                  "    pm.expect(data[0]).to.have.property(\"gcpCost\");",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/costs/trends"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Budget Management",
+      "item": [
+        {
+          "name": "List All Budgets with Live Utilization",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });",
+                  "var data = pm.response.json().data;",
+                  "pm.expect(data).to.be.an(\"array\");",
+                  "if (data.length > 0) {",
+                  "    pm.expect(data[0]).to.have.property(\"amountLimit\");",
+                  "    pm.expect(data[0]).to.have.property(\"currentSpend\");",
+                  "    pm.expect(data[0]).to.have.property(\"utilizationPercentage\");",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/budgets"
+          }
+        },
+        {
+          "name": "Create Budget (POST)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () { pm.response.to.have.status(201); });",
+                  "var jsonData = pm.response.json();",
+                  "pm.expect(jsonData.data.id).to.not.be.null;",
+                  "pm.environment.set(\"created_budget_id\", jsonData.data.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Integration Budget {{$timestamp}}\",\n  \"amountLimit\": 35000.00,\n  \"currency\": \"USD\",\n  \"period\": \"MONTHLY\",\n  \"alertThresholdPercentage\": 85.00,\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": "{{base_url}}/api/budgets"
+          }
+        },
+        {
+          "name": "Get Budget by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });",
+                  "var jsonData = pm.response.json();",
+                  "pm.expect(jsonData.data.id).to.eql(pm.environment.get(\"created_budget_id\"));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/budgets/{{created_budget_id}}"
+          }
+        },
+        {
+          "name": "Update Budget Limit (PUT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });",
+                  "var jsonData = pm.response.json();",
+                  "pm.expect(jsonData.data.amountLimit).to.eql(40000.00);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Integration Budget Updated\",\n  \"amountLimit\": 40000.00,\n  \"currency\": \"USD\",\n  \"period\": \"MONTHLY\",\n  \"alertThresholdPercentage\": 90.00,\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": "{{base_url}}/api/budgets/{{created_budget_id}}"
+          }
+        },
+        {
+          "name": "Validation: Zero Amount Budget Rejection (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () { pm.response.to.have.status(400); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Zero Budget\",\n  \"amountLimit\": 0.00\n}"
+            },
+            "url": "{{base_url}}/api/budgets"
+          }
+        },
+        {
+          "name": "Missing Budget Record (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404 Not Found\", function () { pm.response.to.have.status(404); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/budgets/999999"
+          }
+        },
+        {
+          "name": "Delete Budget (DELETE)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/api/budgets/{{created_budget_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Anomaly Management",
+      "item": [
+        {
+          "name": "List All Anomalies",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });",
+                  "var data = pm.response.json().data;",
+                  "pm.expect(data).to.be.an(\"array\");"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/anomalies"
+          }
+        },
+        {
+          "name": "Filter Anomalies by Severity (HIGH)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });",
+                  "var data = pm.response.json().data;",
+                  "pm.expect(data).to.be.an(\"array\");",
+                  "if (data.length > 0) { pm.expect(data[0].severity).to.eql(\"HIGH\"); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/anomalies?severity=HIGH"
+          }
+        },
+        {
+          "name": "Filter Anomalies by Status (OPEN)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });",
+                  "var data = pm.response.json().data;",
+                  "pm.expect(data).to.be.an(\"array\");",
+                  "if (data.length > 0) { pm.expect(data[0].status).to.eql(\"OPEN\"); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/anomalies?status=OPEN"
+          }
+        },
+        {
+          "name": "Get Anomaly by ID (ID: 1)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });",
+                  "var data = pm.response.json().data;",
+                  "pm.expect(data.id).to.eql(1);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/anomalies/1"
+          }
+        },
+        {
+          "name": "Transition Anomaly Status to Acknowledged (PATCH)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });",
+                  "var data = pm.response.json().data;",
+                  "pm.expect(data.status).to.eql(\"ACKNOWLEDGED\");"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ACKNOWLEDGED\"\n}"
+            },
+            "url": "{{base_url}}/api/anomalies/1/status"
+          }
+        },
+        {
+          "name": "Transition Anomaly Status to Resolved (PATCH)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });",
+                  "var data = pm.response.json().data;",
+                  "pm.expect(data.status).to.eql(\"RESOLVED\");"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"RESOLVED\"\n}"
+            },
+            "url": "{{base_url}}/api/anomalies/1/status"
+          }
+        },
+        {
+          "name": "Missing Anomaly Record (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404 Not Found\", function () { pm.response.to.have.status(404); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/anomalies/999999"
+          }
+        }
+      ]
     }
   ]
 }
