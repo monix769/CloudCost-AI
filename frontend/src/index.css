@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,27 +6,29 @@
 
 @layer base {
   :root {
-    --bg-primary: #0b0f19;
-    --bg-card: rgba(17, 24, 39, 0.75);
-    --border-color: rgba(255, 255, 255, 0.08);
+    --bg-main: #070b14;
+    --card-bg: rgba(19, 30, 54, 0.7);
+    --border-subtle: rgba(255, 255, 255, 0.07);
+    --accent-blue: #3b82f6;
   }
 
   body {
-    @apply bg-[#0b0f19] text-slate-100 antialiased font-sans min-h-screen selection:bg-teal-500 selection:text-white;
+    @apply bg-navy-950 text-slate-100 antialiased font-sans min-h-screen selection:bg-brand-500 selection:text-white;
+    background-color: #070b14;
     background-image: 
-      radial-gradient(at 0% 0%, rgba(20, 184, 166, 0.12) 0px, transparent 50%),
-      radial-gradient(at 100% 0%, rgba(59, 130, 246, 0.10) 0px, transparent 50%),
-      radial-gradient(at 50% 100%, rgba(139, 92, 246, 0.08) 0px, transparent 50%);
+      radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.08) 0px, transparent 45%),
+      radial-gradient(at 100% 0%, rgba(14, 165, 233, 0.06) 0px, transparent 40%),
+      radial-gradient(at 50% 100%, rgba(99, 102, 241, 0.05) 0px, transparent 50%);
     background-attachment: fixed;
   }
 }
 
-/* Glassmorphism card utility */
+/* Glassmorphism panel styling */
 .glass-panel {
-  background: rgba(17, 24, 39, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(19, 30, 54, 0.65);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
 }
 
 .glass-panel-hover {
@@ -35,41 +37,44 @@
 
 .glass-panel-hover:hover {
   transform: translateY(-2px);
-  border-color: rgba(45, 212, 191, 0.3);
-  box-shadow: 0 10px 25px -5px rgba(20, 184, 166, 0.15);
+  border-color: rgba(96, 165, 250, 0.35);
+  box-shadow: 0 12px 30px -8px rgba(37, 99, 235, 0.15);
 }
 
-/* Custom modern scrollbars */
+/* FinOps Card styling */
+.finops-card {
+  @apply rounded-2xl border border-white/[0.08] bg-navy-800/60 backdrop-blur-md p-6 shadow-card-elevated;
+}
+
+/* Custom Scrollbars */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0b0f19;
+  background: #070b14;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1f2937;
-  border-radius: 4px;
+  background: #1e2d4f;
+  border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #374151;
+  background: #3b5182;
 }
 
-/* Subtle glow animations */
-@keyframes pulseGlow {
+/* Animations */
+@keyframes pulseSubtle {
   0%, 100% {
-    opacity: 0.8;
-    filter: drop-shadow(0 0 8px rgba(20, 184, 166, 0.4));
+    opacity: 0.9;
   }
   50% {
-    opacity: 1;
-    filter: drop-shadow(0 0 16px rgba(20, 184, 166, 0.8));
+    opacity: 0.6;
   }
 }
 
-.animate-glow {
-  animation: pulseGlow 3s infinite ease-in-out;
+.animate-pulse-subtle {
+  animation: pulseSubtle 3s infinite ease-in-out;
 }
