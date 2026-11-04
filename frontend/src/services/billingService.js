@@ -31,6 +31,27 @@ export const billingService = {
     const response = await apiClient.delete(`/api/billing/${id}`);
     return response.data;
   },
+
+  // Milestone 5 Multi-Cloud Billing Ingestion & Synchronization
+  async triggerSync(cloudAccountId, dateRange = {}) {
+    const response = await apiClient.post(`/api/billing/sync/${cloudAccountId}`, dateRange);
+    return response.data?.data;
+  },
+
+  async getSyncHistory(params = {}) {
+    const response = await apiClient.get('/api/billing/sync/history', { params });
+    return response.data?.data;
+  },
+
+  async getSyncHistoryById(syncId) {
+    const response = await apiClient.get(`/api/billing/sync/history/${syncId}`);
+    return response.data?.data;
+  },
+
+  async getLatestSyncStatus(cloudAccountId) {
+    const response = await apiClient.get(`/api/billing/sync/status/${cloudAccountId}`);
+    return response.data?.data;
+  },
 };
 
 export default billingService;

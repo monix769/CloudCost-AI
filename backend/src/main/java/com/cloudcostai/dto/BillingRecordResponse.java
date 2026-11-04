@@ -66,6 +66,12 @@ public class BillingRecordResponse {
     @Schema(description = "Resource tags / metadata JSON")
     private String tags;
 
+    @Schema(description = "Billing source type (REAL_PROVIDER, MOCK_PROVIDER, CSV_UPLOAD, MANUAL)", example = "REAL_PROVIDER")
+    private String sourceType;
+
+    @Schema(description = "Stable external record identifier or idempotency fingerprint")
+    private String externalRecordId;
+
     @Schema(description = "Creation timestamp")
     private Instant createdAt;
 }

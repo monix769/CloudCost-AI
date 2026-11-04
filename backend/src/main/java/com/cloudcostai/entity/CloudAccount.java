@@ -45,9 +45,20 @@ public class CloudAccount extends BaseEntity {
     @Column(name = "arn_or_client_id", length = 255)
     private String arnOrClientId;
 
+    @Column(name = "encrypted_credentials", columnDefinition = "TEXT")
+    private String encryptedCredentials;
+
     @Column(name = "sync_status", nullable = false, length = 50)
     @Builder.Default
     private String syncStatus = "PENDING";
+
+    @Column(name = "connection_status", nullable = false, length = 50)
+    @Builder.Default
+    private String connectionStatus = "DISCONNECTED";
+
+    @Column(name = "key_version", nullable = false, length = 20)
+    @Builder.Default
+    private String keyVersion = "v1";
 
     @Column(name = "last_synced_at")
     private Instant lastSyncedAt;

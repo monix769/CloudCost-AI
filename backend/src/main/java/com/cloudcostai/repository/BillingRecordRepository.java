@@ -79,4 +79,13 @@ public interface BillingRecordRepository extends JpaRepository<BillingRecord, Lo
 
     boolean existsByOrganizationIdAndCloudAccountIdAndServiceNameAndBillingPeriodStartAndBillingPeriodEndAndCostAmount(
             Long orgId, Long cloudAccountId, String serviceName, LocalDate start, LocalDate end, BigDecimal costAmount);
+
+    boolean existsByOrganizationIdAndCloudAccountIdAndExternalRecordId(
+            Long orgId, Long cloudAccountId, String externalRecordId);
+
+    Optional<BillingRecord> findByOrganizationIdAndCloudAccountIdAndExternalRecordId(
+            Long orgId, Long cloudAccountId, String externalRecordId);
+
+    @Query("SELECT DISTINCT b.currency FROM BillingRecord b WHERE b.organization.id = :orgId")
+    List<String> findDistinctCurrenciesByOrganizationId(@Param("orgId") Long orgId);
 }

@@ -26,6 +26,7 @@ public class BillingRecordMapper {
                 .billingPeriodEnd(request.getBillingPeriodEnd())
                 .resourceId(request.getResourceId() != null ? request.getResourceId().trim() : null)
                 .tags(request.getTags())
+                .sourceType(com.cloudcostai.entity.BillingSourceType.MANUAL)
                 .build();
     }
 
@@ -48,6 +49,8 @@ public class BillingRecordMapper {
                 .billingPeriodEnd(entity.getBillingPeriodEnd())
                 .resourceId(entity.getResourceId())
                 .tags(entity.getTags())
+                .sourceType(entity.getSourceType() != null ? entity.getSourceType().name() : "MANUAL")
+                .externalRecordId(entity.getExternalRecordId())
                 .createdAt(entity.getCreatedAt())
                 .build();
     }

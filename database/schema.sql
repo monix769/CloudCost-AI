@@ -55,7 +55,10 @@ CREATE TABLE IF NOT EXISTS cloud_accounts (
     account_id VARCHAR(100) NOT NULL,
     account_name VARCHAR(150) NOT NULL,
     arn_or_client_id VARCHAR(255) NULL,
+    encrypted_credentials TEXT NULL,
     sync_status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
+    connection_status VARCHAR(50) NOT NULL DEFAULT 'DISCONNECTED',
+    key_version VARCHAR(20) NOT NULL DEFAULT 'v1',
     last_synced_at TIMESTAMP NULL,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -83,13 +86,42 @@ CREATE TABLE IF NOT EXISTS billing_records (
     billing_period_end DATE NOT NULL,
     resource_id VARCHAR(255) NULL,
     tags JSON NULL,
+    source_type VARCHAR(30) NOT NULL DEFAULT 'MANUAL',
+    external_record_id VARCHAR(255) NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
     FOREIGN KEY (cloud_account_id) REFERENCES cloud_accounts(id) ON DELETE CASCADE,
+    UNIQUE KEY uq_billing_record_dedup (organization_id, cloud_account_id, external_record_id),
     INDEX idx_billing_period (billing_period_start, billing_period_end),
     INDEX idx_billing_service (service_name),
     INDEX idx_billing_org_account (organization_id, cloud_account_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -------------------------------------------------------------------
+-- 4b. Sync History (Multi-Cloud Ingestion Auditing)
+-- -------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS sync_history (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    organization_id BIGINT NOT NULL,
+    cloud_account_id BIGINT NOT NULL,
+    provider VARCHAR(20) NOT NULL,
+    sync_start_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    sync_end_time TIMESTAMP NULL,
+    sync_status VARCHAR(50) NOT NULL DEFAULT 'IN_PROGRESS',
+    records_fetched INT NOT NULL DEFAULT 0,
+    records_inserted INT NOT NULL DEFAULT 0,
+    records_skipped INT NOT NULL DEFAULT 0,
+    error_summary TEXT NULL,
+    date_range_start DATE NULL,
+    date_range_end DATE NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+    FOREIGN KEY (cloud_account_id) REFERENCES cloud_accounts(id) ON DELETE CASCADE,
+    INDEX idx_sync_history_org (organization_id),
+    INDEX idx_sync_history_account (cloud_account_id),
+    INDEX idx_sync_history_status (sync_status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -------------------------------------------------------------------

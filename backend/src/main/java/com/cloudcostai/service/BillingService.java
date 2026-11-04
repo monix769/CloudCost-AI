@@ -239,8 +239,25 @@ public class BillingService {
                             });
 
                     // Check duplicate
-                    boolean exists = billingRecordRepository.existsByOrganizationIdAndCloudAccountIdAndServiceNameAndBillingPeriodStartAndBillingPeriodEndAndCostAmount(
-                            org.getId(), cloudAccount.getId(), serviceName.trim(), startDate, endDate, costAmount);
+                    String fingerprint = com.cloudcostai.cloud.util.BillingFingerprintGenerator.computeFingerprint(
+                            org.getId(), cloudAccount.getId(), provider,
+                            com.cloudcostai.cloud.provider.NormalizedBillingRecord.builder()
+                                    .serviceName(serviceName.trim())
+                                    .region(region.trim())
+                                    .costAmount(costAmount)
+                                    .currency(currency.trim().toUpperCase())
+                                    .usageType(usageType != null ? usageType.trim() : null)
+                                    .usageQuantity(usageQuantity)
+                                    .usageUnit(usageUnit != null ? usageUnit.trim() : null)
+                                    .billingPeriodStart(startDate)
+                                    .billingPeriodEnd(endDate)
+                                    .resourceId(resourceId != null ? resourceId.trim() : null)
+                                    .build());
+
+                    boolean exists = billingRecordRepository.existsByOrganizationIdAndCloudAccountIdAndExternalRecordId(
+                            org.getId(), cloudAccount.getId(), fingerprint) ||
+                            billingRecordRepository.existsByOrganizationIdAndCloudAccountIdAndServiceNameAndBillingPeriodStartAndBillingPeriodEndAndCostAmount(
+                                    org.getId(), cloudAccount.getId(), serviceName.trim(), startDate, endDate, costAmount);
 
                     if (exists) {
                         duplicateCount++;
@@ -261,6 +278,8 @@ public class BillingService {
                             .billingPeriodEnd(endDate)
                             .resourceId(resourceId != null ? resourceId.trim() : null)
                             .tags(tags != null ? tags.trim() : null)
+                            .sourceType(com.cloudcostai.entity.BillingSourceType.CSV_UPLOAD)
+                            .externalRecordId(fingerprint)
                             .build();
 
                     recordsToSave.add(billingRecord);

@@ -144,3 +144,25 @@ All requests require `Authorization: Bearer <TOKEN>` and are scoped automaticall
 - `GET /`: Platform root discovery payload.
 - `GET /api/health`: Spring Boot and MySQL database health probe.
 - `GET /api/status`: JVM memory, runtime parameters, and active profile metadata.
+
+---
+
+## 5. Multi-Cloud Ingestion & Real-Time Billing APIs (Milestone 5)
+
+### 5.1 Cloud Provider Discovery (`/api/cloud-providers`)
+- `GET /api/cloud-providers`: List all supported cloud providers (AWS, Azure, GCP) with their capabilities, reporting latency, authentication types, and IAM requirements.
+- `GET /api/cloud-providers/{provider}/capabilities`: Retrieve capabilities for a specific provider (`AWS`, `AZURE`, `GCP`).
+- `POST /api/cloud-providers/{provider}/test-connection`: Validate credentials in sandbox/mock mode or probe live API connectivity without persisting account state.
+
+### 5.2 Cloud Account Credential Integration (`/api/cloud-accounts`)
+- `POST /api/cloud-accounts/{id}/connect`: Validate credentials and store them encrypted using AES-256-GCM (`v1`). Returns sanitized `CloudAccountResponse`.
+- `POST /api/cloud-accounts/{id}/validate`: Test live IAM/RBAC permissions for an already connected account.
+- `POST /api/cloud-accounts/{id}/disconnect`: Purge stored encrypted credentials and revert connection status to `DISCONNECTED`.
+- `GET /api/cloud-accounts/{id}/connection-status`: Returns `ConnectionStatusResponse` with `connectionStatus`, `credentialsConfigured`, `keyVersion`, and `syncInProgress`.
+
+### 5.3 Billing Synchronization & Idempotency Pipeline (`/api/billing/sync`)
+- `POST /api/billing/sync/{cloudAccountId}`: Trigger manual ingestion for a specific cloud account. Optional query params `startDate` and `endDate` (YYYY-MM-DD). Enforces concurrency locking and returns `SyncHistoryResponse`.
+- `GET /api/billing/sync/history`: Retrieve paginated audit trail of all ingestion executions (`?page=0&size=10&cloudAccountId={id}`).
+- `GET /api/billing/sync/history/{syncId}`: Retrieve detailed audit information for an individual synchronization run.
+- `GET /api/billing/sync/status/{cloudAccountId}`: Check current sync health, progress, and most recent execution summary for an account.
+

@@ -2,6 +2,8 @@ package com.cloudcostai.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -65,4 +67,12 @@ public class BillingRecord extends BaseEntity {
 
     @Column(name = "tags", columnDefinition = "JSON")
     private String tags;
+
+    @Enumerated(jakarta.persistence.EnumType.STRING)
+    @Column(name = "source_type", nullable = false, length = 30)
+    @Builder.Default
+    private BillingSourceType sourceType = BillingSourceType.MANUAL;
+
+    @Column(name = "external_record_id", length = 255)
+    private String externalRecordId;
 }

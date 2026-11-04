@@ -37,6 +37,18 @@ public class CloudAccountResponse {
     @Schema(description = "Provider synchronization status", example = "ACTIVE")
     private String syncStatus;
 
+    @Schema(description = "Connection and credential status", example = "CONNECTED")
+    private String connectionStatus;
+
+    @Schema(description = "Whether encrypted credentials are configured on this account", example = "true")
+    private Boolean hasCredentialsConfigured;
+
+    @Schema(description = "Alias for credential configuration status", example = "true")
+    private Boolean credentialsConfigured;
+
+    @Schema(description = "Encryption key version used for credentials", example = "v1")
+    private String keyVersion;
+
     @Schema(description = "Timestamp of last synchronization")
     private Instant lastSyncedAt;
 

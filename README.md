@@ -281,9 +281,19 @@ npm run build
 | `GET` | `/api/status` | Runtime diagnostics, JVM memory meters, and modules | Public |
 | `GET` | `/api/cloud-accounts` | List all registered cloud provider accounts (Tenant Isolated) | `AUTHENTICATED` |
 | `POST` | `/api/cloud-accounts` | Register new cloud account connection | `AUTHENTICATED` |
+| `POST` | `/api/cloud-accounts/{id}/connect` | Securely encrypt (AES-256-GCM) and connect credentials | `AUTHENTICATED` |
+| `POST` | `/api/cloud-accounts/{id}/validate`| Validate live IAM/RBAC permissions for connected account | `AUTHENTICATED` |
+| `POST` | `/api/cloud-accounts/{id}/disconnect`| Disconnect and wipe stored encrypted credentials | `AUTHENTICATED` |
+| `GET` | `/api/cloud-accounts/{id}/connection-status`| Get live connection, credential, and sync status | `AUTHENTICATED` |
+| `GET` | `/api/cloud-providers` | List supported cloud providers and capabilities | `AUTHENTICATED` |
+| `GET` | `/api/cloud-providers/{p}/capabilities`| Get specific provider API and permission capabilities | `AUTHENTICATED` |
+| `POST` | `/api/cloud-providers/{p}/test-connection`| Probe credentials connectivity without saving | `AUTHENTICATED` |
+| `POST` | `/api/billing/sync/{id}` | Trigger multi-cloud billing synchronization | `AUTHENTICATED` |
+| `GET` | `/api/billing/sync/history` | Paginated audit trail of all ingestion runs | `AUTHENTICATED` |
+| `GET` | `/api/billing/sync/status/{id}` | Get latest synchronization summary for account | `AUTHENTICATED` |
 | `GET` | `/api/billing` | Paginated billing line-items and filters | `AUTHENTICATED` |
-| `POST` | `/api/billing/upload-csv`| Ingest multipart CSV billing records | `AUTHENTICATED` |
-| `GET` | `/api/costs/summary` | Multi-cloud cost aggregation summary | `AUTHENTICATED` |
+| `POST` | `/api/billing/upload` | Ingest multipart CSV billing records | `AUTHENTICATED` |
+| `GET` | `/api/costs/summary` | Multi-cloud cost aggregation summary (Currency Verified) | `AUTHENTICATED` |
 | `GET` | `/api/costs/by-provider`| Aggregated cost distribution by cloud provider | `AUTHENTICATED` |
 | `GET` | `/api/costs/by-service` | Top spend by cloud service | `AUTHENTICATED` |
 | `GET` | `/api/costs/trends` | Monthly time-series expenditure trends | `AUTHENTICATED` |
@@ -296,12 +306,13 @@ npm run build
 
 ---
 
-## 9. Security & JWT Configuration
+## 9. Security & Encryption Configuration
 
 ### Environment Variables
 Configure security settings in environment variables or `application.properties`:
-- `JWT_SECRET`: Minimum 256-bit hexadecimal or string secret key for HMAC-SHA256 token signing.
+- `JWT_SECRET`: Minimum 256-bit hexadecimal secret key for HMAC-SHA256 token signing.
 - `JWT_EXPIRATION_MS`: Access token validity duration in milliseconds (default: `86400000` / 24 hours).
+- `CLOUD_CREDENTIAL_ENCRYPTION_KEY`: 256-bit (32 bytes / 64 hex characters) key for AES-256-GCM credential encryption. Validated at startup with an automatic cryptographic self-test.
 - `CORS_ALLOWED_ORIGINS`: Permitted frontend origins (default: `http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173`).
 
 ---
@@ -331,5 +342,18 @@ Configure security settings in environment variables or `application.properties`
   - [x] Role-Based Access Control (`ROLE_ADMIN` vs `ROLE_USER`)
   - [x] React 19 SaaS Login & Registration Pages, `AuthContext`, and `ProtectedRoute`
   - [x] 100% Automated Backend Tests (50 JUnit tests passed) & 51 Postman Newman tests passed
-- [ ] **Milestone 5 — Automated Rightsizing & Cloud Guardrail Enforcement (Upcoming)**
+- [x] **Milestone 5 — Multi-Cloud Provider Ingestion & Real-Time Billing**
+  - [x] Modular `CloudBillingProvider` SPI (`AwsBillingProvider`, `AzureBillingProvider`, `GcpBillingProvider`)
+  - [x] Authenticated AES-256-GCM Credential Encryption with Startup Key Validation & `v1` Key Versioning
+  - [x] Deterministic SHA-256 Fingerprint Generator honoring stable provider-native record IDs
+  - [x] MySQL Database-Level Duplicate Prevention (`uq_billing_record_dedup`) with Concurrent Collision Safety
+  - [x] Concurrency Lock Management (`SyncLockManager`) & Swappable Distributed Lock Abstraction
+  - [x] Full Ingestion Pipeline (`BillingIngestionService`) with Transactional Persistence and `SyncHistory` Auditing
+  - [x] Scheduled Ingestion (`BillingSyncScheduler`) & Manual Real-Time Sync Triggers
+  - [x] Strict Currency Consistency Check across all multi-cloud expenditure analytics
+  - [x] Explicit Provenance Tracking (`REAL_PROVIDER`, `MOCK_PROVIDER`, `CSV_UPLOAD`, `MANUAL`)
+  - [x] React 19 UI: Provider Capabilities Cards, Connect Credentials Modal, Validation, Sync Now, & Audit Logs
+  - [x] 100% Automated Verification: 83 JUnit 5 & Mockito Tests Passed, 66 Postman Newman Requests (89 Assertions) Passed, Frontend Production Build Succeeded
+- [ ] **Milestone 6 — Automated Rightsizing & Cloud Guardrail Enforcement (Upcoming)**
   - [ ] Scheduled automated resource shutdown and rightsizing approval workflows
+

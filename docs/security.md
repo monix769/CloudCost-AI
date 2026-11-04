@@ -141,5 +141,39 @@ Enforcement mechanisms:
 | `/api/billing/**` | ALL | `AUTHENTICATED` | Multi-tenant billing record & CSV operations |
 | `/api/costs/**` | ALL | `AUTHENTICATED` | Multi-tenant cost analytics & aggregates |
 | `/api/budgets/**` | ALL | `AUTHENTICATED` | Multi-tenant budget guardrails |
-| `/api/anomalies/**` | ALL | `AUTHENTICATED` | Multi-tenant cost anomaly detection |
 | `/api/admin/**` | ALL | `ROLE_ADMIN` | Organization administration & user roster |
+
+---
+
+## 7. Cloud Credential Encryption & Key Management (Milestone 5)
+
+CloudCost AI enforces strict zero-knowledge security for external cloud provider credentials (AWS Access Keys, Azure Client Secrets, GCP Service Account JSON keys).
+
+### A. Authenticated Encryption Algorithm (AES-256-GCM)
+- **Algorithm**: `AES/GCM/NoPadding`
+- **Key Length**: 256 bits (32 bytes)
+- **Initialization Vector (IV)**: 96-bit (12 bytes) cryptographically secure random IV generated per encryption event using `SecureRandom`. IVs are never reused.
+- **Authentication Tag**: 128-bit authentication tag ensuring both confidentiality and cryptographic integrity against tampering or bit-flipping attacks.
+- **Ciphertext Storage Format**:
+  ```
+  v1:<base64-encoded-96bit-iv>:<base64-encoded-ciphertext-and-tag>
+  ```
+
+### B. Startup Key Validation & Self-Test
+During application startup (`@PostConstruct`), `CredentialEncryptionService`:
+1. Validates that `CLOUD_CREDENTIAL_ENCRYPTION_KEY` is configured and decodes to exactly 256 bits (32 bytes).
+2. Executes an internal cryptographic round-trip self-test (encrypting and decrypting a synthetic canary payload).
+3. If the key is invalid or the self-test fails, the Spring ApplicationContext terminates immediately with a fatal exit code, preventing the application from running in an insecure state.
+
+### C. Zero-Exposure Policy
+- **Logs**: `ProviderCredentials.toString()` automatically masks all sensitive fields (`AKIA****12`).
+- **REST DTOs**: `CloudAccountResponse` exposes only metadata (`credentialsConfigured: true`, `keyVersion: "v1"`). Raw secrets and encrypted blobs are never serialized into API responses.
+- **Error Handlers**: Cryptographic exceptions are caught centrally; internal cipher details or stack traces are never surfaced to client responses.
+
+### D. Key Rotation Strategy
+- All encrypted records store their active key version in `cloud_accounts.key_version` (default: `v1`).
+- When rotating keys:
+  1. The new key version (e.g. `v2`) is introduced in the key management vault.
+  2. Legacy records continue decrypting using the key corresponding to their stored `key_version`.
+  3. A background migration job or on-access re-encryption reads with the legacy key and immediately re-encrypts using `v2`, updating `key_version` in MySQL without service disruption.
+

@@ -1381,6 +1381,387 @@
           }
         }
       ]
+    },
+    {
+      "name": "7. Multi-Cloud Provider Integration",
+      "item": [
+        {
+          "name": "List All Supported Cloud Providers",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.success).to.be.true;",
+                  "pm.expect(json.data).to.be.an('array');",
+                  "const providers = json.data.map(p => p.provider);",
+                  "pm.expect(providers).to.include('AWS');",
+                  "pm.expect(providers).to.include('AZURE');",
+                  "pm.expect(providers).to.include('GCP');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/cloud-providers"
+          }
+        },
+        {
+          "name": "Get AWS Provider Capabilities",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.data.provider).to.eql('AWS');",
+                  "pm.expect(json.data.liveSupported).to.be.true;",
+                  "pm.expect(json.data.supportedApi).to.include('Cost Explorer');",
+                  "pm.expect(json.data.reportingLag).to.include('24 to 48 hours');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/cloud-providers/AWS/capabilities"
+          }
+        },
+        {
+          "name": "Get Azure Provider Capabilities",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.data.provider).to.eql('AZURE');",
+                  "pm.expect(json.data.supportedApi).to.include('Cost Management Query API');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/cloud-providers/AZURE/capabilities"
+          }
+        },
+        {
+          "name": "Get GCP Provider Capabilities",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.data.provider).to.eql('GCP');",
+                  "pm.expect(json.data.supportedApi).to.include('BigQuery');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/cloud-providers/GCP/capabilities"
+          }
+        },
+        {
+          "name": "Test Provider Connection in Sandbox Mode (AWS)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.data.valid).to.be.true;",
+                  "pm.expect(json.data.connectionStatus).to.eql('CONNECTED');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"useMockAdapter\": true,\n  \"awsRegion\": \"us-east-1\"\n}"
+            },
+            "url": "{{base_url}}/api/cloud-providers/AWS/test-connection"
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Cloud Account Credential Integration",
+      "item": [
+        {
+          "name": "Connect Account Credentials with AES-256-GCM Encryption",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.data.connectionStatus).to.eql('CONNECTED');",
+                  "pm.expect(json.data.credentialsConfigured).to.be.true;",
+                  "pm.expect(json.data.keyVersion).to.eql('v1');",
+                  "pm.expect(json.data).to.not.have.property('encryptedCredentials');",
+                  "pm.expect(json.data).to.not.have.property('secretAccessKey');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"useMockAdapter\": true,\n  \"awsRegion\": \"us-east-1\",\n  \"awsRoleArn\": \"arn:aws:iam::123456789012:role/CloudCostFinOps\"\n}"
+            },
+            "url": "{{base_url}}/api/cloud-accounts/1/connect"
+          }
+        },
+        {
+          "name": "Get Account Connection Status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.data.cloudAccountId).to.eql(1);",
+                  "pm.expect(json.data.connectionStatus).to.eql('CONNECTED');",
+                  "pm.expect(json.data.credentialsConfigured).to.be.true;",
+                  "pm.expect(json.data.keyVersion).to.eql('v1');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/cloud-accounts/1/connection-status"
+          }
+        },
+        {
+          "name": "Validate Active Cloud Account Connection",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.data.valid).to.be.true;",
+                  "pm.expect(json.data.connectionStatus).to.eql('CONNECTED');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/cloud-accounts/1/validate"
+          }
+        },
+        {
+          "name": "Disconnect Cloud Account Credentials",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.data.connectionStatus).to.eql('DISCONNECTED');",
+                  "pm.expect(json.data.credentialsConfigured).to.be.false;"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/cloud-accounts/1/disconnect"
+          }
+        },
+        {
+          "name": "Re-connect Cloud Account Credentials for Ingestion Pipeline",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.data.connectionStatus).to.eql('CONNECTED');",
+                  "pm.expect(json.data.credentialsConfigured).to.be.true;"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"useMockAdapter\": true,\n  \"awsRegion\": \"us-east-1\"\n}"
+            },
+            "url": "{{base_url}}/api/cloud-accounts/1/connect"
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Billing Synchronization & Idempotency Pipeline",
+      "item": [
+        {
+          "name": "Trigger Cloud Billing Synchronization",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.data.syncStatus).to.eql('SUCCESS');",
+                  "pm.expect(json.data.recordsFetched).to.be.above(0);",
+                  "pm.expect(json.data.cloudAccountId).to.eql(1);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/billing/sync/1"
+          }
+        },
+        {
+          "name": "Verify Deduplication Idempotency (Zero Duplicate Inserts)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.data.syncStatus).to.eql('SUCCESS');",
+                  "pm.expect(json.data.recordsInserted).to.eql(0);",
+                  "pm.expect(json.data.recordsSkipped).to.eql(json.data.recordsFetched);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/billing/sync/1"
+          }
+        },
+        {
+          "name": "Get Latest Sync Status for Cloud Account",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.data.cloudAccountId).to.eql(1);",
+                  "pm.expect(json.data.syncStatus).to.eql('SUCCESS');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/billing/sync/status/1"
+          }
+        },
+        {
+          "name": "Get Paginated Sync Audit History",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.data.content).to.be.an('array');",
+                  "pm.expect(json.data.content.length).to.be.above(0);",
+                  "pm.expect(json.data.content[0].syncStatus).to.eql('SUCCESS');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/billing/sync/history?page=0&size=10"
+          }
+        },
+        {
+          "name": "Test Cross-Tenant Ingestion Isolation Rejection (IDOR Prevention)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 404 Not Found for Cross-Tenant Sync', function () { pm.response.to.have.status(404); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tenant_b_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "url": "{{base_url}}/api/billing/sync/1"
+          }
+        }
+      ]
     }
   ],
   "auth": {

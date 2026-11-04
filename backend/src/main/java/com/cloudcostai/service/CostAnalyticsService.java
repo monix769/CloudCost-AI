@@ -35,6 +35,7 @@ public class CostAnalyticsService {
     @Transactional(readOnly = true)
     public CostSummaryResponse getCostSummary(LocalDate startDate, LocalDate endDate) {
         Organization org = organizationService.getCurrentUserOrganization();
+        String activeCurrency = validateCurrencyConsistency(org.getId());
 
         BigDecimal totalCost = billingRecordRepository.calculateTotalCost(org.getId(), startDate, endDate);
         Long recordCount = billingRecordRepository.countRecords(org.getId(), startDate, endDate);
@@ -56,7 +57,7 @@ public class CostAnalyticsService {
 
         return CostSummaryResponse.builder()
                 .totalCost(totalCost.setScale(2, RoundingMode.HALF_UP))
-                .currency("USD")
+                .currency(activeCurrency)
                 .startDate(startDate)
                 .endDate(endDate)
                 .totalRecords(recordCount != null ? recordCount : 0L)
@@ -64,9 +65,24 @@ public class CostAnalyticsService {
                 .build();
     }
 
+    private String validateCurrencyConsistency(Long orgId) {
+        List<String> currencies = billingRecordRepository.findDistinctCurrenciesByOrganizationId(orgId);
+        if (currencies == null || currencies.isEmpty()) {
+            return "USD";
+        }
+        if (currencies.size() > 1) {
+            log.warn("Multiple distinct billing currencies detected for organization [{}]: {}", orgId, currencies);
+            throw new com.cloudcostai.exception.BadRequestException(
+                    "Multiple distinct billing currencies detected in organization records: " + currencies +
+                    ". Cross-currency aggregation without conversion rates is prohibited. Please filter by provider or account.");
+        }
+        return currencies.get(0);
+    }
+
     @Transactional(readOnly = true)
     public List<ProviderCostResponse> getCostsByProvider(LocalDate startDate, LocalDate endDate) {
         Organization org = organizationService.getCurrentUserOrganization();
+        validateCurrencyConsistency(org.getId());
 
         BigDecimal grandTotal = billingRecordRepository.calculateTotalCost(org.getId(), startDate, endDate);
         if (grandTotal == null || grandTotal.compareTo(BigDecimal.ZERO) == 0) {
@@ -92,6 +108,7 @@ public class CostAnalyticsService {
     @Transactional(readOnly = true)
     public List<ServiceCostResponse> getCostsByService(LocalDate startDate, LocalDate endDate, Integer limit) {
         Organization org = organizationService.getCurrentUserOrganization();
+        validateCurrencyConsistency(org.getId());
 
         BigDecimal grandTotal = billingRecordRepository.calculateTotalCost(org.getId(), startDate, endDate);
         if (grandTotal == null || grandTotal.compareTo(BigDecimal.ZERO) == 0) {
@@ -122,6 +139,7 @@ public class CostAnalyticsService {
     @Transactional(readOnly = true)
     public List<CostTrendResponse> getCostTrends(LocalDate startDate, LocalDate endDate) {
         Organization org = organizationService.getCurrentUserOrganization();
+        validateCurrencyConsistency(org.getId());
 
         List<MonthlyTrendSummary> summaries = billingRecordRepository.aggregateMonthlyTrends(org.getId(), startDate, endDate);
         if (summaries == null || summaries.isEmpty()) {

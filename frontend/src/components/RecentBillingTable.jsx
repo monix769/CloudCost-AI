@@ -1,6 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import billingService from '../services/billingService';
-import { Search, RefreshCw, ChevronLeft, ChevronRight, CheckCircle2, AlertCircle } from 'lucide-react';
+import {
+  Search,
+  RefreshCw,
+  ChevronLeft,
+  ChevronRight,
+  CheckCircle2,
+  AlertCircle,
+  Database,
+  Cloud,
+  FileSpreadsheet,
+  Info,
+  ShieldCheck,
+} from 'lucide-react';
 
 export default function RecentBillingTable({ refreshTrigger }) {
   const [records, setRecords] = useState([]);
@@ -8,6 +20,7 @@ export default function RecentBillingTable({ refreshTrigger }) {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProvider, setSelectedProvider] = useState('ALL');
+  const [selectedSource, setSelectedSource] = useState('ALL');
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [totalElements, setTotalElements] = useState(0);
@@ -24,7 +37,12 @@ export default function RecentBillingTable({ refreshTrigger }) {
       };
       const res = await billingService.getBillingRecords(params);
       if (res && res.content) {
-        setRecords(res.content);
+        let content = res.content;
+        // Client-side filter for source type if specified
+        if (selectedSource !== 'ALL') {
+          content = content.filter((r) => r.sourceType === selectedSource);
+        }
+        setRecords(content);
         setTotalPages(res.totalPages || 1);
         setTotalElements(res.totalElements || 0);
       } else {
@@ -41,7 +59,7 @@ export default function RecentBillingTable({ refreshTrigger }) {
 
   useEffect(() => {
     fetchRecords();
-  }, [page, selectedProvider, refreshTrigger]);
+  }, [page, selectedProvider, selectedSource, refreshTrigger]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -62,19 +80,65 @@ export default function RecentBillingTable({ refreshTrigger }) {
     }
   };
 
+  const getSourceBadge = (sourceType) => {
+    switch (sourceType) {
+      case 'REAL_PROVIDER':
+        return (
+          <span
+            className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
+            title="Ingested live from Cloud Provider API (AWS Cost Explorer, Azure Cost Management, GCP BigQuery)"
+          >
+            <Cloud className="w-3 h-3" />
+            <span>REAL PROVIDER</span>
+          </span>
+        );
+      case 'MOCK_PROVIDER':
+        return (
+          <span
+            className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30"
+            title="Sandbox Mock Ingestion: Live credentials pending"
+          >
+            <Info className="w-3 h-3" />
+            <span>MOCK PROVIDER</span>
+          </span>
+        );
+      case 'CSV_UPLOAD':
+        return (
+          <span
+            className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-purple-500/15 text-purple-300 border border-purple-500/30"
+            title="Imported via FinOps CSV batch export"
+          >
+            <FileSpreadsheet className="w-3 h-3" />
+            <span>CSV UPLOAD</span>
+          </span>
+        );
+      case 'MANUAL':
+      default:
+        return (
+          <span
+            className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-800 text-slate-400 border border-slate-700"
+            title="Manual FinOps entry"
+          >
+            <Database className="w-3 h-3" />
+            <span>MANUAL</span>
+          </span>
+        );
+    }
+  };
+
   return (
     <div className="glass-panel rounded-2xl p-6 border border-white/[0.08] shadow-card-elevated space-y-4">
-      {/* Table Header with Search and Provider Filters */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+      {/* Table Header with Search, Provider Filters and Source Filters */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-800">
         <div>
           <div className="flex items-center space-x-2">
-            <h3 className="font-bold text-white text-base">Persisted Cloud Billing Activity</h3>
+            <h3 className="font-bold text-white text-base">Persisted Multi-Cloud Billing Activity</h3>
             <span className="text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-slate-800 text-slate-300 border border-slate-700">
               {totalElements} Live Records
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-0.5">
-            Real line-item costs stored in MySQL cloudcost_ai.billing_records
+            Deduplicated cloud cost records with provenance tracking (Real API vs Mock vs CSV)
           </p>
         </div>
 
@@ -87,7 +151,7 @@ export default function RecentBillingTable({ refreshTrigger }) {
               placeholder="Search services..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-8 pr-3 py-1.5 rounded-xl bg-navy-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors w-40 sm:w-48"
+              className="pl-8 pr-3 py-1.5 rounded-xl bg-navy-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors w-36 sm:w-44"
             />
           </form>
 
@@ -100,13 +164,38 @@ export default function RecentBillingTable({ refreshTrigger }) {
                   setSelectedProvider(prov);
                   setPage(0);
                 }}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ${
+                className={`px-2 py-1 rounded-lg text-[10px] font-semibold transition-all ${
                   selectedProvider === prov
                     ? 'bg-blue-600 text-white shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 {prov}
+              </button>
+            ))}
+          </div>
+
+          {/* Source Type Filter */}
+          <div className="flex items-center p-1 rounded-xl bg-navy-900 border border-slate-800 text-xs font-mono">
+            {[
+              { id: 'ALL', label: 'ALL SOURCES' },
+              { id: 'REAL_PROVIDER', label: 'REAL' },
+              { id: 'MOCK_PROVIDER', label: 'MOCK' },
+              { id: 'CSV_UPLOAD', label: 'CSV' },
+            ].map((src) => (
+              <button
+                key={src.id}
+                onClick={() => {
+                  setSelectedSource(src.id);
+                  setPage(0);
+                }}
+                className={`px-2 py-1 rounded-lg text-[10px] font-semibold transition-all ${
+                  selectedSource === src.id
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                {src.label}
               </button>
             ))}
           </div>
@@ -136,17 +225,18 @@ export default function RecentBillingTable({ refreshTrigger }) {
             <tr className="border-b border-slate-800/80 text-slate-400 font-mono text-[11px]">
               <th className="pb-3 font-semibold">Provider / Account</th>
               <th className="pb-3 font-semibold">Service &amp; Usage</th>
+              <th className="pb-3 font-semibold">Source Provenance</th>
               <th className="pb-3 font-semibold">Region</th>
               <th className="pb-3 font-semibold">Billing Period</th>
-              <th className="pb-3 font-semibold text-right">Cost (USD)</th>
-              <th className="pb-3 font-semibold text-right">Status</th>
+              <th className="pb-3 font-semibold text-right">Cost Amount</th>
+              <th className="pb-3 font-semibold text-right">Idempotency</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800/60 font-sans">
             {loading ? (
               [1, 2, 3, 4, 5].map((n) => (
                 <tr key={n} className="animate-pulse">
-                  <td colSpan="6" className="py-3">
+                  <td colSpan="7" className="py-3">
                     <div className="h-5 bg-slate-800/60 rounded w-full"></div>
                   </td>
                 </tr>
@@ -163,7 +253,7 @@ export default function RecentBillingTable({ refreshTrigger }) {
                       >
                         {record.provider || 'CLOUD'}
                       </span>
-                      <span className="font-medium text-white truncate max-w-[140px] sm:max-w-none">
+                      <span className="font-medium text-white truncate max-w-[130px] sm:max-w-none">
                         {record.accountName || `Account #${record.cloudAccountId}`}
                       </span>
                     </div>
@@ -176,26 +266,41 @@ export default function RecentBillingTable({ refreshTrigger }) {
                       </p>
                     </div>
                   </td>
-                  <td className="py-3 font-mono text-[11px] text-slate-300">{record.region}</td>
+                  <td className="py-3">
+                    {getSourceBadge(record.sourceType)}
+                  </td>
+                  <td className="py-3 font-mono text-[11px] text-slate-300">{record.region || 'global'}</td>
                   <td className="py-3 font-mono text-[11px] text-slate-400">
                     {record.billingPeriodStart} to {record.billingPeriodEnd}
                   </td>
                   <td className="py-3 text-right font-mono font-bold text-white text-sm">
                     ${Number(record.costAmount).toFixed(2)}
+                    <span className="text-[10px] font-normal text-slate-400 ml-1">
+                      {record.currency || 'USD'}
+                    </span>
                   </td>
                   <td className="py-3 text-right">
-                    <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-                      <CheckCircle2 className="w-3 h-3" />
-                      <span>PERSISTED</span>
-                    </span>
+                    {record.externalRecordId ? (
+                      <span
+                        className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded text-[9px] font-mono bg-blue-500/10 text-blue-300 border border-blue-500/20"
+                        title={`Deterministic Fingerprint: ${record.externalRecordId}`}
+                      >
+                        <ShieldCheck className="w-3 h-3 text-blue-400" />
+                        <span>FINGERPRINTED</span>
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-mono text-slate-500">STANDARD</span>
+                    )}
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="6" className="py-12 text-center text-slate-400">
-                  <p className="font-semibold text-sm">No billing records found in MySQL database.</p>
-                  <p className="text-xs text-slate-500 mt-1">Upload a CSV billing export above to populate records.</p>
+                <td colSpan="7" className="py-12 text-center text-slate-400">
+                  <p className="font-semibold text-sm">No billing records found matching criteria.</p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Connect an active cloud provider in Cloud Accounts or upload a CSV export to populate records.
+                  </p>
                 </td>
               </tr>
             )}
