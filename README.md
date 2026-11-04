@@ -269,43 +269,67 @@ npm run build
 
 ## 8. REST API Endpoints Specification
 
-| Method | Endpoint | Description | Auth |
+| Method | Endpoint | Description | Auth Level |
 |---|---|---|---|
+| `POST` | `/api/auth/register` | Register new user account and organization tenant | Public |
+| `POST` | `/api/auth/login` | Authenticate credentials and receive signed JWT | Public |
+| `GET` | `/api/auth/me` | Retrieve authenticated user profile and tenant context | `AUTHENTICATED` |
+| `POST` | `/api/auth/logout` | Revoke active JWT token via server-side denylist | `AUTHENTICATED` |
+| `GET` | `/api/admin/users` | Retrieve organization user roster | `ROLE_ADMIN` |
 | `GET` | `/` | Root API platform metadata and endpoint discovery | Public |
 | `GET` | `/api/health` | Application health and live MySQL `SELECT 1` ping | Public |
 | `GET` | `/api/status` | Runtime diagnostics, JVM memory meters, and modules | Public |
+| `GET` | `/api/cloud-accounts` | List all registered cloud provider accounts (Tenant Isolated) | `AUTHENTICATED` |
+| `POST` | `/api/cloud-accounts` | Register new cloud account connection | `AUTHENTICATED` |
+| `GET` | `/api/billing` | Paginated billing line-items and filters | `AUTHENTICATED` |
+| `POST` | `/api/billing/upload-csv`| Ingest multipart CSV billing records | `AUTHENTICATED` |
+| `GET` | `/api/costs/summary` | Multi-cloud cost aggregation summary | `AUTHENTICATED` |
+| `GET` | `/api/costs/by-provider`| Aggregated cost distribution by cloud provider | `AUTHENTICATED` |
+| `GET` | `/api/costs/by-service` | Top spend by cloud service | `AUTHENTICATED` |
+| `GET` | `/api/costs/trends` | Monthly time-series expenditure trends | `AUTHENTICATED` |
+| `GET` | `/api/budgets` | List budgets with live calculated spend utilization | `AUTHENTICATED` |
+| `POST` | `/api/budgets` | Create budget allocation and alerting threshold | `AUTHENTICATED` |
+| `GET` | `/api/anomalies` | List AI-detected cost spikes with severity filters | `AUTHENTICATED` |
+| `PATCH`| `/api/anomalies/{id}/status` | Transition anomaly lifecycle status | `AUTHENTICATED` |
 | `GET` | `/swagger-ui.html` | Interactive Swagger UI API documentation | Public |
 | `GET` | `/v3/api-docs` | OpenAPI 3.0 raw specification JSON | Public |
 
 ---
 
-## 9. Development Roadmap
+## 9. Security & JWT Configuration
+
+### Environment Variables
+Configure security settings in environment variables or `application.properties`:
+- `JWT_SECRET`: Minimum 256-bit hexadecimal or string secret key for HMAC-SHA256 token signing.
+- `JWT_EXPIRATION_MS`: Access token validity duration in milliseconds (default: `86400000` / 24 hours).
+- `CORS_ALLOWED_ORIGINS`: Permitted frontend origins (default: `http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173`).
+
+---
+
+## 10. Development Roadmap
 
 - [x] **Milestone 1 — Complete Project Foundation & Architecture**
   - [x] Spring Boot 3 + Java 21 REST API Engine
-  - [x] React 19 + Vite + Tailwind CSS Frontend Application Shell
+  - [x] React 19 + Vite + Tailwind CSS Frontend Shell
   - [x] MySQL 8+ Database Schema & HikariCP Integration
   - [x] Clean Architecture with Standardized `ApiResponse` and `@RestControllerAdvice`
-  - [x] Interactive Endpoint Tester & Health Probes
-  - [x] Postman Collection & JUnit 5 Testing Suite
-  - [x] Docker & Multi-Environment Configuration
 - [x] **Milestone 2 — Professional SaaS Dashboard Development**
   - [x] Enterprise Dark Navy SaaS UI with Professional Blue Accent Palette
-  - [x] Responsive Collapsible Sidebar with Active Route Highlighting & Mobile Drawer
-  - [x] Dynamic Header with Backend Live Status, Notifications, & User Profile Dropdown
-  - [x] 4 Primary FinOps KPI Cards (Total Spend, Budget, Utilization %, Potential Savings)
-  - [x] Chart.js Visualizations (Multi-Month Trends, Provider Distribution, Top Services, Budget Forecast)
-  - [x] Interactive Recent Billing Activity Table with Search & Multi-Cloud Provider Filters
-  - [x] Connected Cloud Environments Overview (AWS, GCP, Azure tenant cards)
-  - [x] Cost Center Budget Guardrails & Threshold Warning Tracking
-  - [x] Machine Learning Anomaly Detection Feed with Severity Pills & Resolution Workflows
-  - [x] Actionable Cost Optimization Engine with Estimated Monthly Savings
-  - [x] Executive Reports Center & Tenant Governance Settings
-  - [x] Preserved Milestone 1 System Architecture, Health Diagnostics, and OpenAPI Specifications
-- [ ] **Milestone 3 — Cloud Provider Ingestion & Real-Time Billing (Upcoming)**
-  - AWS Cost Explorer, Azure Cost Management, and GCP Billing IAM connectors
-  - Automated daily & hourly cloud spend aggregation
-- [ ] **Milestone 4 — Advanced Unit Economics & Custom Dashboards (Upcoming)**
-  - Dynamic user-configurable FinOps widgets & custom KPI formulas
+  - [x] Responsive Collapsible Sidebar with Route Highlighting
+  - [x] 4 Primary FinOps KPI Cards & Chart.js Visualizations
+  - [x] Interactive Billing Table, Cloud Accounts Grid, Budget Guardrails, & AI Anomaly Feed
+- [x] **Milestone 3 — Spring Boot Backend REST APIs & Persistence**
+  - [x] Complete REST Controllers for Cloud Accounts, Billing CSV Processing, Budgets, and Anomalies
+  - [x] Standardized Envelope Responses & Centralized Exception Handling
+  - [x] Automated Postman & JUnit Test Suites
+- [x] **Milestone 4 — JWT Authentication & Role-Based Authorization**
+  - [x] User Registration (`/api/auth/register`) with BCrypt Password Hashing
+  - [x] Secure Login (`/api/auth/login`) with HMAC-SHA256 Signed JWT Generation
+  - [x] User Profile Inspection (`/api/auth/me`) & Stateless Logout Denylist (`/api/auth/logout`)
+  - [x] Spring Security 6 Stateless Filter Chain with `JwtAuthenticationFilter`
+  - [x] Multi-Tenant Data Isolation and IDOR Prevention Across All Domain Services
+  - [x] Role-Based Access Control (`ROLE_ADMIN` vs `ROLE_USER`)
+  - [x] React 19 SaaS Login & Registration Pages, `AuthContext`, and `ProtectedRoute`
+  - [x] 100% Automated Backend Tests (50 JUnit tests passed) & 51 Postman Newman tests passed
 - [ ] **Milestone 5 — Automated Rightsizing & Cloud Guardrail Enforcement (Upcoming)**
-  - Scheduled automated resource shutdown and rightsizing approval workflows
+  - [ ] Scheduled automated resource shutdown and rightsizing approval workflows

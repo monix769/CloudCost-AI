@@ -1,7 +1,13 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { SystemProvider } from './context/SystemContext';
+import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
 import AppLayout from './layouts/AppLayout';
+
+// Auth Pages (Milestone 4)
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 
 // SaaS FinOps Pages
 import OverviewPage from './pages/OverviewPage';
@@ -24,31 +30,45 @@ import NotFoundPage from './pages/NotFoundPage';
 export default function App() {
   return (
     <SystemProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<AppLayout />}>
-            <Route index element={<OverviewPage />} />
-            <Route path="overview" element={<Navigate to="/" replace />} />
-            <Route path="cloud-accounts" element={<CloudAccountsPage />} />
-            <Route path="analytics" element={<CostAnalyticsPage />} />
-            <Route path="billing" element={<BillingManagementPage />} />
-            <Route path="budgets" element={<BudgetManagementPage />} />
-            <Route path="anomalies" element={<AnomalyDetectionPage />} />
-            <Route path="optimization" element={<CostOptimizationPage />} />
-            <Route path="reports" element={<ReportsPage />} />
-            <Route path="settings" element={<SettingsPage />} />
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Public Authentication Routes */}
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
 
-            {/* Diagnostics & Architecture */}
-            <Route path="architecture" element={<ArchitecturePage />} />
-            <Route path="health" element={<HealthPage />} />
-            <Route path="status" element={<StatusPage />} />
-            <Route path="docs" element={<DocsPage />} />
+            {/* Protected Enterprise SaaS Application Routes */}
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <AppLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<OverviewPage />} />
+              <Route path="overview" element={<Navigate to="/" replace />} />
+              <Route path="cloud-accounts" element={<CloudAccountsPage />} />
+              <Route path="analytics" element={<CostAnalyticsPage />} />
+              <Route path="billing" element={<BillingManagementPage />} />
+              <Route path="budgets" element={<BudgetManagementPage />} />
+              <Route path="anomalies" element={<AnomalyDetectionPage />} />
+              <Route path="optimization" element={<CostOptimizationPage />} />
+              <Route path="reports" element={<ReportsPage />} />
+              <Route path="settings" element={<SettingsPage />} />
 
-            {/* 404 Fallback */}
-            <Route path="*" element={<NotFoundPage />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
+              {/* Diagnostics & Architecture */}
+              <Route path="architecture" element={<ArchitecturePage />} />
+              <Route path="health" element={<HealthPage />} />
+              <Route path="status" element={<StatusPage />} />
+              <Route path="docs" element={<DocsPage />} />
+
+              {/* 404 Fallback */}
+              <Route path="*" element={<NotFoundPage />} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
     </SystemProvider>
   );
 }

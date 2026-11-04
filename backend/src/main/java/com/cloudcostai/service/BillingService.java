@@ -61,7 +61,7 @@ public class BillingService {
             LocalDate endDate,
             Pageable pageable) {
 
-        Organization org = organizationService.getDefaultOrganization();
+        Organization org = organizationService.getCurrentUserOrganization();
 
         Specification<BillingRecord> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -92,7 +92,7 @@ public class BillingService {
 
     @Transactional(readOnly = true)
     public BillingRecordResponse getBillingRecordById(Long id) {
-        Organization org = organizationService.getDefaultOrganization();
+        Organization org = organizationService.getCurrentUserOrganization();
         BillingRecord record = billingRecordRepository.findByIdAndOrganizationId(id, org.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("BillingRecord", "id", id));
         return billingRecordMapper.toResponse(record);
@@ -100,7 +100,7 @@ public class BillingService {
 
     @Transactional
     public BillingRecordResponse createBillingRecord(BillingRecordRequest request) {
-        Organization org = organizationService.getDefaultOrganization();
+        Organization org = organizationService.getCurrentUserOrganization();
 
         if (request.getBillingPeriodStart().isAfter(request.getBillingPeriodEnd())) {
             throw new BadRequestException("Billing period start date must not be after end date");
@@ -117,7 +117,7 @@ public class BillingService {
 
     @Transactional
     public void deleteBillingRecord(Long id) {
-        Organization org = organizationService.getDefaultOrganization();
+        Organization org = organizationService.getCurrentUserOrganization();
         BillingRecord record = billingRecordRepository.findByIdAndOrganizationId(id, org.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("BillingRecord", "id", id));
         billingRecordRepository.delete(record);
@@ -135,7 +135,7 @@ public class BillingService {
             throw new BadRequestException("Only valid .csv files are supported for billing ingestion");
         }
 
-        Organization org = organizationService.getDefaultOrganization();
+        Organization org = organizationService.getCurrentUserOrganization();
 
         int totalProcessed = 0;
         int importedCount = 0;

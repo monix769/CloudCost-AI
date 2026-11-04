@@ -33,7 +33,7 @@ public class BudgetService {
 
     @Transactional(readOnly = true)
     public List<BudgetResponse> getAllBudgets() {
-        Organization org = organizationService.getDefaultOrganization();
+        Organization org = organizationService.getCurrentUserOrganization();
         List<Budget> budgets = budgetRepository.findByOrganizationId(org.getId());
 
         return budgets.stream()
@@ -53,7 +53,7 @@ public class BudgetService {
 
     @Transactional
     public BudgetResponse createBudget(BudgetRequest request) {
-        Organization org = organizationService.getDefaultOrganization();
+        Organization org = organizationService.getCurrentUserOrganization();
 
         if (budgetRepository.existsByOrganizationIdAndNameIgnoreCase(org.getId(), request.getName().trim())) {
             throw new DuplicateResourceException("Budget", "name", request.getName());
@@ -93,7 +93,7 @@ public class BudgetService {
 
     @Transactional(readOnly = true)
     public Budget findBudgetEntity(Long id) {
-        Organization org = organizationService.getDefaultOrganization();
+        Organization org = organizationService.getCurrentUserOrganization();
         return budgetRepository.findByIdAndOrganizationId(id, org.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Budget", "id", id));
     }

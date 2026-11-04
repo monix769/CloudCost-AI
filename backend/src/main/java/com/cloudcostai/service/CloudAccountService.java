@@ -28,7 +28,7 @@ public class CloudAccountService {
 
     @Transactional(readOnly = true)
     public List<CloudAccountResponse> getAllAccounts(CloudProvider provider) {
-        Organization org = organizationService.getDefaultOrganization();
+        Organization org = organizationService.getCurrentUserOrganization();
         List<CloudAccount> accounts;
         if (provider != null) {
             accounts = cloudAccountRepository.findByOrganizationIdAndProvider(org.getId(), provider);
@@ -48,7 +48,7 @@ public class CloudAccountService {
 
     @Transactional
     public CloudAccountResponse createAccount(CloudAccountRequest request) {
-        Organization org = organizationService.getDefaultOrganization();
+        Organization org = organizationService.getCurrentUserOrganization();
 
         if (cloudAccountRepository.existsByOrganizationIdAndProviderAndAccountId(
                 org.getId(), request.getProvider(), request.getAccountId().trim())) {
@@ -88,7 +88,7 @@ public class CloudAccountService {
 
     @Transactional(readOnly = true)
     public CloudAccount findAccountEntity(Long id) {
-        Organization org = organizationService.getDefaultOrganization();
+        Organization org = organizationService.getCurrentUserOrganization();
         return cloudAccountRepository.findByIdAndOrganizationId(id, org.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("CloudAccount", "id", id));
     }

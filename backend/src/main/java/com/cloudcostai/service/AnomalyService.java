@@ -27,7 +27,7 @@ public class AnomalyService {
 
     @Transactional(readOnly = true)
     public List<CostAnomalyResponse> getAnomalies(AnomalySeverity severity, AnomalyStatus status) {
-        Organization org = organizationService.getDefaultOrganization();
+        Organization org = organizationService.getCurrentUserOrganization();
         List<CostAnomaly> anomalies;
 
         if (severity != null && status != null) {
@@ -76,7 +76,7 @@ public class AnomalyService {
 
     @Transactional(readOnly = true)
     public CostAnomaly findAnomalyEntity(Long id) {
-        Organization org = organizationService.getDefaultOrganization();
+        Organization org = organizationService.getCurrentUserOrganization();
         return costAnomalyRepository.findByIdAndOrganizationId(id, org.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("CostAnomaly", "id", id));
     }

@@ -16,6 +16,8 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 
+import org.springframework.security.test.context.support.WithMockUser;
+
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -23,6 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("dev")
+@WithMockUser(username = "admin@cloudcostai.local", roles = {"ADMIN"})
 class BillingControllerTest {
 
     @Autowired
@@ -39,7 +42,7 @@ class BillingControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success", is(true)))
                 .andExpect(jsonPath("$.data.content", notNullValue()))
-                .andExpect(jsonPath("$.data.pageable", notNullValue()));
+                .andExpect(jsonPath("$.data.page", notNullValue()));
     }
 
     @Test

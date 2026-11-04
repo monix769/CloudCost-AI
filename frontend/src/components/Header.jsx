@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { useSystem } from '../context/SystemContext';
+import { useAuth } from '../context/AuthContext';
 import ConnectionBadge from './ConnectionBadge';
 import {
   Menu,
@@ -19,7 +20,9 @@ import {
 
 export default function Header({ setMobileOpen, collapsed, setCollapsed }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { isConnected, isDatabaseConnected } = useSystem();
+  const { user, logout } = useAuth();
 
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -27,6 +30,22 @@ export default function Header({ setMobileOpen, collapsed, setCollapsed }) {
 
   const notifRef = useRef(null);
   const profileRef = useRef(null);
+
+  const handleLogout = async () => {
+    setProfileOpen(false);
+    await logout();
+    navigate('/login');
+  };
+
+  const getInitials = (fullName, email) => {
+    if (fullName) {
+      const parts = fullName.trim().split(' ');
+      if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+      return fullName.substring(0, 2).toUpperCase();
+    }
+    if (email) return email.substring(0, 2).toUpperCase();
+    return 'CC';
+  };
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -258,14 +277,18 @@ export default function Header({ setMobileOpen, collapsed, setCollapsed }) {
           <div className="relative" ref={profileRef}>
             <button
               onClick={() => setProfileOpen(!profileOpen)}
-              className="flex items-center space-x-2.5 p-1.5 rounded-xl hover:bg-navy-800/80 border border-transparent hover:border-slate-800 transition-colors"
+              className="flex items-center space-x-2.5 p-1.5 rounded-xl hover:bg-navy-800/80 border border-transparent hover:border-slate-800 transition-colors cursor-pointer"
             >
               <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-xs font-bold text-white shadow-sm">
-                AU
+                {getInitials(user?.fullName, user?.email)}
               </div>
               <div className="hidden md:block text-left">
-                <p className="text-xs font-bold text-white leading-tight">Admin User</p>
-                <p className="text-[10px] text-slate-400 font-mono">FinOps Lead</p>
+                <p className="text-xs font-bold text-white leading-tight">
+                  {user?.fullName || 'Authenticated User'}
+                </p>
+                <p className="text-[10px] text-slate-400 font-mono">
+                  {user?.role ? user.role.replace('ROLE_', '') : 'USER'}
+                </p>
               </div>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400 hidden sm:block" />
             </button>
@@ -273,14 +296,14 @@ export default function Header({ setMobileOpen, collapsed, setCollapsed }) {
             {profileOpen && (
               <div className="absolute right-0 mt-2 w-64 rounded-2xl glass-panel border border-white/[0.1] shadow-2xl p-4 z-50 animate-fadeIn space-y-3">
                 <div className="pb-3 border-b border-slate-800">
-                  <p className="text-xs font-bold text-white">Admin User</p>
-                  <p className="text-[11px] text-slate-400 font-mono">admin@cloudcostai.local</p>
+                  <p className="text-xs font-bold text-white">{user?.fullName || 'FinOps Member'}</p>
+                  <p className="text-[11px] text-slate-400 font-mono truncate">{user?.email}</p>
                   <div className="mt-2 flex items-center space-x-1.5">
-                    <span className="text-[10px] px-2 py-0.5 rounded font-mono font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
-                      Acme Cloud Corp
+                    <span className="text-[10px] px-2 py-0.5 rounded font-mono font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30 truncate max-w-[130px]">
+                      {user?.organizationName || 'Acme Cloud Corp'}
                     </span>
                     <span className="text-[10px] px-2 py-0.5 rounded font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                      ADMIN
+                      {user?.role ? user.role.replace('ROLE_', '') : 'USER'}
                     </span>
                   </div>
                 </div>
@@ -303,10 +326,29 @@ export default function Header({ setMobileOpen, collapsed, setCollapsed }) {
                     <Shield className="w-4 h-4 text-slate-400" />
                     <span>Cloud IAM Credentials</span>
                   </Link>
+
+                  {user?.role === 'ROLE_ADMIN' && (
+                    <Link
+                      to="/cloud-accounts"
+                      onClick={() => setProfileOpen(false)}
+                      className="flex items-center space-x-2 px-2.5 py-2 rounded-lg text-blue-300 hover:text-white hover:bg-blue-600/20 transition-colors font-medium"
+                    >
+                      <Sparkles className="w-4 h-4 text-blue-400" />
+                      <span>Admin Tenant Controls</span>
+                    </Link>
+                  )}
+
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center space-x-2 px-2.5 py-2 rounded-lg text-rose-300 hover:text-white hover:bg-rose-500/20 transition-colors cursor-pointer text-left"
+                  >
+                    <LogOut className="w-4 h-4 text-rose-400" />
+                    <span>Sign Out</span>
+                  </button>
                 </div>
 
                 <div className="pt-2 border-t border-slate-800 text-[11px] text-slate-400">
-                  <p>Milestone 2 • SaaS Dashboard</p>
+                  <p>Milestone 4 • JWT Auth Active</p>
                 </div>
               </div>
             )}

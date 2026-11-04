@@ -34,7 +34,7 @@ public class CostAnalyticsService {
 
     @Transactional(readOnly = true)
     public CostSummaryResponse getCostSummary(LocalDate startDate, LocalDate endDate) {
-        Organization org = organizationService.getDefaultOrganization();
+        Organization org = organizationService.getCurrentUserOrganization();
 
         BigDecimal totalCost = billingRecordRepository.calculateTotalCost(org.getId(), startDate, endDate);
         Long recordCount = billingRecordRepository.countRecords(org.getId(), startDate, endDate);
@@ -66,7 +66,7 @@ public class CostAnalyticsService {
 
     @Transactional(readOnly = true)
     public List<ProviderCostResponse> getCostsByProvider(LocalDate startDate, LocalDate endDate) {
-        Organization org = organizationService.getDefaultOrganization();
+        Organization org = organizationService.getCurrentUserOrganization();
 
         BigDecimal grandTotal = billingRecordRepository.calculateTotalCost(org.getId(), startDate, endDate);
         if (grandTotal == null || grandTotal.compareTo(BigDecimal.ZERO) == 0) {
@@ -91,7 +91,7 @@ public class CostAnalyticsService {
 
     @Transactional(readOnly = true)
     public List<ServiceCostResponse> getCostsByService(LocalDate startDate, LocalDate endDate, Integer limit) {
-        Organization org = organizationService.getDefaultOrganization();
+        Organization org = organizationService.getCurrentUserOrganization();
 
         BigDecimal grandTotal = billingRecordRepository.calculateTotalCost(org.getId(), startDate, endDate);
         if (grandTotal == null || grandTotal.compareTo(BigDecimal.ZERO) == 0) {
@@ -121,7 +121,7 @@ public class CostAnalyticsService {
 
     @Transactional(readOnly = true)
     public List<CostTrendResponse> getCostTrends(LocalDate startDate, LocalDate endDate) {
-        Organization org = organizationService.getDefaultOrganization();
+        Organization org = organizationService.getCurrentUserOrganization();
 
         List<MonthlyTrendSummary> summaries = billingRecordRepository.aggregateMonthlyTrends(org.getId(), startDate, endDate);
         if (summaries == null || summaries.isEmpty()) {

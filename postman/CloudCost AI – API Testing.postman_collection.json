@@ -7,6 +7,544 @@
   },
   "item": [
     {
+      "name": "0. Authentication",
+      "item": [
+        {
+          "name": "Register a New User",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const ts = Date.now();",
+                  "pm.environment.set('reg_user_email', 'finops.user.' + ts + '@cloudcostai.local');"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201 Created', function () { pm.response.to.have.status(201); });",
+                  "pm.test('Envelope success is true', function () { pm.expect(pm.response.json().success).to.be.true; });",
+                  "pm.test('Returns JWT token', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.data.token).to.be.a('string');",
+                  "    pm.expect(json.data.tokenType).to.eql('Bearer');",
+                  "    pm.environment.set('user_jwt_token', json.data.token);",
+                  "});",
+                  "pm.test('Sanitized user profile returned without password', function () {",
+                  "    const user = pm.response.json().data.user;",
+                  "    pm.expect(user.email).to.eql(pm.environment.get('reg_user_email').toLowerCase());",
+                  "    pm.expect(user.role).to.eql('ROLE_USER');",
+                  "    pm.expect(user.passwordHash).to.be.undefined;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"FinOps Analyst\",\n  \"email\": \"{{reg_user_email}}\",\n  \"password\": \"FinOps@2026!\",\n  \"organizationName\": \"Acme Cloud Corp\"\n}"
+            },
+            "url": "{{base_url}}/api/auth/register"
+          }
+        },
+        {
+          "name": "Register Duplicate Email (Rejection)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 409 Conflict', function () { pm.response.to.have.status(409); });",
+                  "pm.test('Conflict error message returned', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.status).to.eql(409);",
+                  "    pm.expect(json.message).to.include('already exists');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"FinOps Duplicate\",\n  \"email\": \"{{reg_user_email}}\",\n  \"password\": \"FinOps@2026!\",\n  \"organizationName\": \"Acme Cloud Corp\"\n}"
+            },
+            "url": "{{base_url}}/api/auth/register"
+          }
+        },
+        {
+          "name": "Login with Valid Credentials (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('JWT token received and saved to environment', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.success).to.be.true;",
+                  "    pm.expect(json.data.token).to.be.a('string');",
+                  "    pm.environment.set('jwt_token', json.data.token);",
+                  "});",
+                  "pm.test('Admin role verified in profile', function () {",
+                  "    const user = pm.response.json().data.user;",
+                  "    pm.expect(user.role).to.eql('ROLE_ADMIN');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@cloudcostai.local\",\n  \"password\": \"Admin@1234\"\n}"
+            },
+            "url": "{{base_url}}/api/auth/login"
+          }
+        },
+        {
+          "name": "Login with Invalid Credentials (Rejection)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 401 Unauthorized', function () { pm.response.to.have.status(401); });",
+                  "pm.test('Generic safe credential error message', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.status).to.eql(401);",
+                  "    pm.expect(json.message).to.eql('Invalid email or password.');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@cloudcostai.local\",\n  \"password\": \"WrongPassword!\"\n}"
+            },
+            "url": "{{base_url}}/api/auth/login"
+          }
+        },
+        {
+          "name": "Access Profile with Valid JWT",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Authenticated profile belongs to admin', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.success).to.be.true;",
+                  "    pm.expect(json.data.email).to.eql('admin@cloudcostai.local');",
+                  "    pm.expect(json.data.role).to.eql('ROLE_ADMIN');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": "{{base_url}}/api/auth/me"
+          }
+        },
+        {
+          "name": "Access Profile without JWT (Rejection)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 401 Unauthorized', function () { pm.response.to.have.status(401); });",
+                  "pm.test('Error structure indicates authentication required', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.status).to.eql(401);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "url": "{{base_url}}/api/auth/me"
+          }
+        },
+        {
+          "name": "Access Profile with Invalid JWT (Rejection)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 401 Unauthorized', function () { pm.response.to.have.status(401); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "invalid.garbage.jwt.token",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": "{{base_url}}/api/auth/me"
+          }
+        },
+        {
+          "name": "Access Profile with Expired JWT (Rejection)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 401 Unauthorized', function () { pm.response.to.have.status(401); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbkBjbG91ZGNvc3RhaS5sb2NhbCIsImV4cCI6MTUxNjIzOTAyMn0.invalid",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": "{{base_url}}/api/auth/me"
+          }
+        },
+        {
+          "name": "Access Protected API without Authentication (Rejection)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 401 Unauthorized', function () { pm.response.to.have.status(401); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "url": "{{base_url}}/api/cloud-accounts"
+          }
+        },
+        {
+          "name": "Access Protected API with Authentication (Success)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Cloud accounts data array returned', function () {",
+                  "    pm.expect(pm.response.json().success).to.be.true;",
+                  "    pm.expect(pm.response.json().data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": "{{base_url}}/api/cloud-accounts"
+          }
+        },
+        {
+          "name": "Test Role-Based Authorization (USER access to Admin restricted)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 403 Forbidden for ROLE_USER', function () { pm.response.to.have.status(403); });",
+                  "pm.test('Error indicates access denied', function () {",
+                  "    pm.expect(pm.response.json().status).to.eql(403);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": "{{base_url}}/api/admin/users"
+          }
+        },
+        {
+          "name": "Test Role-Based Authorization (ADMIN access to Admin permitted)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK for ROLE_ADMIN', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Admin user roster returned', function () {",
+                  "    pm.expect(pm.response.json().success).to.be.true;",
+                  "    pm.expect(pm.response.json().data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": "{{base_url}}/api/admin/users"
+          }
+        },
+        {
+          "name": "Test Tenant Isolation (Register Second Tenant)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const ts = Date.now();",
+                  "pm.environment.set('tenant_b_email', 'tenant.b.' + ts + '@beta.com');"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201 Created for Tenant B', function () { pm.response.to.have.status(201); });",
+                  "pm.test('Tenant B token stored', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.environment.set('tenant_b_token', json.data.token);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Beta Tenant Admin\",\n  \"email\": \"{{tenant_b_email}}\",\n  \"password\": \"BetaCorp@2026!\",\n  \"organizationName\": \"Beta Corp Global\"\n}"
+            },
+            "url": "{{base_url}}/api/auth/register"
+          }
+        },
+        {
+          "name": "Test Cross-Tenant Access Restrictions (IDOR Prevention)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 404 Not Found for cross-tenant object access', function () { pm.response.to.have.status(404); });",
+                  "pm.test('IDOR prevented: Tenant B cannot access Tenant A resource', function () {",
+                  "    pm.expect(pm.response.json().status).to.eql(404);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tenant_b_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": "{{base_url}}/api/cloud-accounts/1"
+          }
+        },
+        {
+          "name": "Test Logout Behavior (Stateless Denylist)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Logout response confirms revocation', function () {",
+                  "    pm.expect(pm.response.json().success).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "url": "{{base_url}}/api/auth/logout"
+          }
+        },
+        {
+          "name": "Verify Revoked Token Rejected After Logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 401 Unauthorized for denylisted token', function () { pm.response.to.have.status(401); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": "{{base_url}}/api/auth/me"
+          }
+        }
+      ]
+    },
+    {
       "name": "1. Health & Status",
       "item": [
         {
@@ -844,5 +1382,15 @@
         }
       ]
     }
-  ]
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  }
 }
