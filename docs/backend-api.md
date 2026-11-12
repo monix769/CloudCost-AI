@@ -1,4 +1,4 @@
-# CloudCost AI – REST API Specification (Milestones 1–8)
+# CloudCost AI – REST API Specification (Milestones 1–9)
 
 ## Overview & Base Configuration
 - **Base URL**: `http://localhost:8080`
@@ -278,5 +278,36 @@ All Milestone 6 endpoints require `Authorization: Bearer <TOKEN>` and strictly s
 - `GET /api/optimization/commitment-analysis`: Evaluates continuous 30-day baseline compute expenditure and models 1-Year (28% discount) and 3-Year (42% discount) Savings Plans/RIs with explicit assumptions.
 - `POST /api/optimization/analyze`: Trigger an on-demand analysis scan across all cloud accounts.
 - `GET /api/optimization/export`: Download full recommendations report in CSV format (`cost-optimization-recommendations.csv`).
+
+---
+
+## 10. Reports, Organization & Enterprise Security (Milestone 9)
+
+### 10.1 Professional Reporting Engine
+- `POST /api/reports/generate`: Request generation of an enterprise report.
+  - Body: `{ "reportType": "EXECUTIVE_SUMMARY", "format": "PDF", "startDate": "2026-10-15", "endDate": "2026-11-12", "provider": "AWS", "currency": "USD" }`
+  - Types: `CLOUD_SPENDING`, `MONTHLY_COST_ANALYSIS`, `PROVIDER_COMPARISON`, `BUDGET_UTILIZATION`, `ANOMALY_DETECTION`, `COST_OPTIMIZATION`, `SAVINGS_SUMMARY`, `EXECUTIVE_SUMMARY`
+  - Formats: `PDF`, `CSV`
+- `GET /api/reports`: List generated reports for the current organization. Optional query param: `?type=EXECUTIVE_SUMMARY`.
+- `GET /api/reports/{id}`: Retrieve report metadata and download statistics.
+- `GET /api/reports/{id}/download`: Stream and download report file with path-traversal validation and download counter increment.
+- `DELETE /api/reports/{id}`: Delete generated report file and archive metadata.
+
+### 10.2 Organization & Member Management
+- `GET /api/organizations/current`: View organization profile, slug, tier, and member statistics.
+- `PUT /api/organizations/current`: Update organization legal name (`ADMIN` role required).
+- `GET /api/organizations/current/members`: List all organization users and roles.
+- `PUT /api/organizations/current/members/{id}`: Update member role (`ADMIN`/`USER`) and active status (`ADMIN` role required; guarded by sole-admin demotion and self-deactivation protection).
+- `DELETE /api/organizations/current/members/{id}`: Remove member from tenant organization (`ADMIN` role required; guarded by sole-admin and self-removal protection).
+- `POST /api/organizations/current/invitations`: Generate and dispatch member invitation token (`ADMIN` role required).
+- `GET /api/organizations/current/invitations`: List pending and historical invitations (`ADMIN` role required).
+- `DELETE /api/organizations/current/invitations/{id}`: Revoke pending invitation token (`ADMIN` role required).
+
+### 10.3 Enterprise Audit Logging
+- `GET /api/audit-logs`: Query append-only audit trail (`ADMIN` role required).
+  - Params: `action`, `userId`, `startDate`, `endDate`, `page`, `size`
+  - Actions: `LOGIN`, `LOGOUT`, `FAILED_LOGIN`, `USER_REGISTER`, `MEMBER_INVITED`, `MEMBER_ROLE_UPDATED`, `MEMBER_STATUS_UPDATED`, `MEMBER_REMOVED`, `REPORT_GENERATED`, `REPORT_DOWNLOADED`, `REPORT_DELETED`, `ORGANIZATION_UPDATED`
+- `GET /api/audit-logs/{id}`: Retrieve single audit event detail (`ADMIN` role required).
+
 
 

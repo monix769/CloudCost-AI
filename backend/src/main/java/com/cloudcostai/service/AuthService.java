@@ -4,6 +4,7 @@ import com.cloudcostai.dto.AuthResponse;
 import com.cloudcostai.dto.LoginRequest;
 import com.cloudcostai.dto.RegisterRequest;
 import com.cloudcostai.dto.UserProfileResponse;
+import com.cloudcostai.entity.AuditActionType;
 import com.cloudcostai.entity.Organization;
 import com.cloudcostai.entity.User;
 import com.cloudcostai.entity.UserRole;
@@ -45,6 +46,7 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtProperties jwtProperties;
     private final TokenDenylistService tokenDenylistService;
+    private final AuditLogService auditLogService;
 
     /**
      * Registers a new user, hashes password with BCrypt, links to organization,
@@ -90,6 +92,13 @@ public class AuthService {
         log.info("Successfully registered user ID [{}] with email [{}] under organization [{}]",
                 savedUser.getId(), savedUser.getEmail(), organization.getName());
 
+        try {
+            auditLogService.logEvent(organization, savedUser.getId(), savedUser.getEmail(),
+                    AuditActionType.USER_REGISTER, "USER", savedUser.getId().toString(), null, "User registered successfully", "SUCCESS");
+        } catch (Exception ex) {
+            log.debug("Audit log skipped: {}", ex.getMessage());
+        }
+
         String jwt = jwtTokenProvider.generateTokenFromUser(savedUser);
         UserProfileResponse profile = mapToProfileResponse(savedUser);
 
@@ -126,6 +135,13 @@ public class AuthService {
 
             log.info("User [{}] successfully logged in", normalizedEmail);
 
+            try {
+                auditLogService.logEvent(organizationService.getCurrentUserOrganization(), principal.getId(), principal.getUsername(),
+                        AuditActionType.LOGIN, "USER", principal.getId().toString(), null, "User logged in successfully", "SUCCESS");
+            } catch (Exception ex) {
+                log.debug("Audit log skipped: {}", ex.getMessage());
+            }
+
             UserProfileResponse profile = UserProfileResponse.builder()
                     .id(principal.getId())
                     .email(principal.getUsername())
@@ -146,6 +162,12 @@ public class AuthService {
 
         } catch (BadCredentialsException ex) {
             log.warn("Failed login attempt for email: {}", normalizedEmail);
+            try {
+                auditLogService.logEvent(organizationService.getDefaultOrganization(), null, normalizedEmail,
+                        AuditActionType.FAILED_LOGIN, "AUTH", normalizedEmail, null, "Failed login attempt (bad credentials)", "FAILURE");
+            } catch (Exception e) {
+                log.debug("Audit log skipped: {}", e.getMessage());
+            }
             throw new BadCredentialsException("Invalid email or password.");
         }
     }
@@ -179,6 +201,11 @@ public class AuthService {
                 tokenDenylistService.revokeToken(token, remainingMs);
                 log.info("Revoked JWT token with remaining validity: {} ms", remainingMs);
             }
+        }
+        try {
+            auditLogService.logCurrent(AuditActionType.LOGOUT, "AUTH", "SESSION", "User logged out");
+        } catch (Exception ex) {
+            log.debug("Audit log skipped: {}", ex.getMessage());
         }
         SecurityContextHolder.clearContext();
     }

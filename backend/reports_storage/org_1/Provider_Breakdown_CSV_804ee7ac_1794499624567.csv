@@ -1,0 +1,11 @@
+Report,Multi-Cloud Provider Comparison
+Organization,Acme Cloud Corp Enterprise
+Period Start,All-Time
+Period End,Present
+Currency,USD
+Generated At,2026-11-12
+
+Provider,Expenditure ($),Share of Total (%)
+AZURE,6281.35,37.1%
+AWS,5636.30,33.3%
+GCP,5008.20,29.6%
