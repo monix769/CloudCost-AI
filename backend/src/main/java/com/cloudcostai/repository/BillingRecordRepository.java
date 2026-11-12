@@ -208,4 +208,7 @@ public interface BillingRecordRepository extends JpaRepository<BillingRecord, Lo
 
     @Query("SELECT DISTINCT b.currency FROM BillingRecord b WHERE b.organization.id = :orgId")
     List<String> findDistinctCurrenciesByOrganizationId(@Param("orgId") Long orgId);
+
+    List<BillingRecord> findByOrganizationIdAndBillingPeriodStartBetweenOrderByBillingPeriodStartAsc(
+            Long organizationId, LocalDate startDate, LocalDate endDate);
 }

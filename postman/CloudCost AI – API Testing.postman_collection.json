@@ -2211,6 +2211,244 @@
           }
         }
       ]
+    },
+    {
+      "name": "11. Cost Anomaly Detection Engine",
+      "item": [
+        {
+          "name": "1. Anomaly KPI Summary",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "var res = pm.response.json();",
+                  "pm.test('Response success is true', function () { pm.expect(res.success).to.be.true; });",
+                  "pm.test('KPI fields present', function () {",
+                  "    pm.expect(res.data).to.have.property('totalAnomalies');",
+                  "    pm.expect(res.data).to.have.property('criticalCount');",
+                  "    pm.expect(res.data).to.have.property('totalExcessCost');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/anomalies/summary"
+          }
+        },
+        {
+          "name": "2. Anomaly Trends Over Time",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "var res = pm.response.json();",
+                  "pm.test('Response success is true', function () { pm.expect(res.success).to.be.true; });",
+                  "pm.test('Trends list is array', function () { pm.expect(res.data.trends).to.be.an('array'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/anomalies/trends"
+          }
+        },
+        {
+          "name": "3. Trigger Anomaly Detection Scan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "var res = pm.response.json();",
+                  "pm.test('Scan executed successfully', function () {",
+                  "    pm.expect(res.success).to.be.true;",
+                  "    pm.expect(res.data).to.have.property('evaluatedCount');",
+                  "    pm.expect(res.data).to.have.property('createdCount');",
+                  "    pm.expect(res.data).to.have.property('skippedCount');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/anomalies/detect"
+          }
+        },
+        {
+          "name": "4. Filter Anomalies by Severity (CRITICAL)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "var data = pm.response.json().data;",
+                  "pm.expect(data).to.be.an('array');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/anomalies?severity=CRITICAL"
+          }
+        },
+        {
+          "name": "5. Paginated Anomalies Query",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "var res = pm.response.json();",
+                  "pm.test('Paged response returned', function () {",
+                  "    pm.expect(res.data).to.have.property('content');",
+                  "    pm.expect(res.data.content).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/anomalies?page=0&size=5"
+          }
+        },
+        {
+          "name": "6. Get Anomaly Detection Config",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "var res = pm.response.json();",
+                  "pm.test('Config properties returned', function () {",
+                  "    pm.expect(res.data).to.have.property('zScoreThreshold');",
+                  "    pm.expect(res.data).to.have.property('movingAvgWindowDays');",
+                  "    pm.expect(res.data).to.have.property('spendingSpikePercent');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/anomalies/config"
+          }
+        },
+        {
+          "name": "7. Update Anomaly Detection Config",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "var res = pm.response.json();",
+                  "pm.test('Config updated successfully', function () {",
+                  "    pm.expect(res.success).to.be.true;",
+                  "    pm.expect(res.data.zScoreThreshold).to.eql(2.75);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"zScoreThreshold\": 2.75,\n  \"movingAvgWindowDays\": 14,\n  \"movingAvgDeviationPercent\": 35.00,\n  \"spendingSpikePercent\": 50.00,\n  \"spendingSpikeMinAmount\": 50.0000,\n  \"budgetWarningThresholdPercent\": 90.00,\n  \"budgetCriticalThresholdPercent\": 100.00,\n  \"isAutomatedDetectionEnabled\": true\n}"
+            },
+            "url": "{{base_url}}/api/anomalies/config"
+          }
+        },
+        {
+          "name": "8. Get In-App Notifications",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "var res = pm.response.json();",
+                  "pm.test('Notifications is array', function () { pm.expect(res.data).to.be.an('array'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/notifications"
+          }
+        },
+        {
+          "name": "9. Get Unread Notification Count",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "var res = pm.response.json();",
+                  "pm.test('Unread count present', function () { pm.expect(res.data).to.have.property('unreadCount'); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/notifications/unread-count"
+          }
+        },
+        {
+          "name": "10. Mark All Notifications as Read",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "var res = pm.response.json();",
+                  "pm.test('Marked read success', function () { pm.expect(res.success).to.be.true; });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/notifications/read-all"
+          }
+        }
+      ]
+    }
+      ]
     }
   ],
   "auth": {

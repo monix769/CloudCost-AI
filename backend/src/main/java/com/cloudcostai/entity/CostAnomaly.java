@@ -16,6 +16,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "cost_anomalies")
@@ -37,11 +38,18 @@ public class CostAnomaly extends BaseEntity {
     @Column(name = "service_name", nullable = false, length = 100)
     private String serviceName;
 
+    @Column(name = "region", length = 50)
+    private String region;
+
     @Column(name = "expected_cost", nullable = false, precision = 14, scale = 4)
     private BigDecimal expectedCost;
 
     @Column(name = "actual_cost", nullable = false, precision = 14, scale = 4)
     private BigDecimal actualCost;
+
+    @Column(name = "excess_cost", nullable = false, precision = 14, scale = 4)
+    @Builder.Default
+    private BigDecimal excessCost = BigDecimal.ZERO;
 
     @Column(name = "deviation_percentage", nullable = false, precision = 6, scale = 2)
     private BigDecimal deviationPercentage;
@@ -50,9 +58,23 @@ public class CostAnomaly extends BaseEntity {
     @Column(name = "severity", nullable = false, length = 20)
     private AnomalySeverity severity;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "detection_method", nullable = false, length = 50)
+    @Builder.Default
+    private AnomalyDetectionMethod detectionMethod = AnomalyDetectionMethod.Z_SCORE;
+
     @Column(name = "detected_at", nullable = false)
     @Builder.Default
     private Instant detectedAt = Instant.now();
+
+    @Column(name = "anomaly_period_start")
+    private LocalDate anomalyPeriodStart;
+
+    @Column(name = "anomaly_period_end")
+    private LocalDate anomalyPeriodEnd;
+
+    @Column(name = "dimension_key", length = 255)
+    private String dimensionKey;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
@@ -61,4 +83,7 @@ public class CostAnomaly extends BaseEntity {
 
     @Column(name = "root_cause_summary", columnDefinition = "TEXT")
     private String rootCauseSummary;
+
+    @Column(name = "recommended_action", columnDefinition = "TEXT")
+    private String recommendedAction;
 }

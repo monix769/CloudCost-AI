@@ -217,3 +217,38 @@ All Milestone 6 endpoints require `Authorization: Bearer <TOKEN>` and strictly s
 - `GET /api/analytics/export/service-breakdown`: Stream CSV of service cost breakdown.
 - `GET /api/analytics/export/forecast`: Stream CSV of historical actuals and forecast projections with confidence intervals.
 - `GET /api/analytics/export/insights`: Stream CSV of prioritized FinOps recommendations.
+
+---
+
+## 7. Real-Time Cost Anomaly Detection Engine (Milestone 7)
+
+### 7.1 Anomaly Queries & KPI Summaries
+- `GET /api/anomalies`: List detected cost anomalies with optional filters:
+  - `severity`: `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`
+  - `status`: `OPEN`, `ACKNOWLEDGED`, `RESOLVED`, `DISMISSED`
+  - `provider`: `AWS`, `AZURE`, `GCP`
+  - `serviceName`: Case-insensitive substring
+  - `startDate`, `endDate`: ISO `YYYY-MM-DD`
+  - `page`, `size`: Pagination controls (returns `Page` when `page` is provided, otherwise `List`)
+- `GET /api/anomalies/{id}`: Retrieve single anomaly details with root cause and recommended action.
+- `GET /api/anomalies/summary`: Aggregate metrics including `totalAnomalies`, `criticalCount`, `highCount`, `openCount`, and `totalExcessCost` (`?currency=USD`).
+- `GET /api/anomalies/trends`: Time-series daily anomaly counts and total excess spending (`?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD&currency=USD`).
+
+### 7.2 Anomaly Execution & Lifecycle Management
+- `POST /api/anomalies/detect`: Execute multi-algorithm statistical scan across workloads and budgets (`?targetDate=YYYY-MM-DD`). Returns `AnomalyDetectionResult` with count of newly flagged anomalies and active duplicates skipped.
+- `PATCH /api/anomalies/{id}/status`: Transition workflow lifecycle state (`OPEN`, `ACKNOWLEDGED`, `RESOLVED`, `DISMISSED`) with optional operator `notes`. Automatically persists transition to audit history.
+- `GET /api/anomalies/{id}/history`: Retrieve chronological audit log of all status transitions for the anomaly.
+
+### 7.3 Tenant Detection Parameters
+- `GET /api/anomalies/config`: Inspect configured statistical parameters (Z-score threshold, moving average window, spike percentage, budget alerts).
+- `PUT /api/anomalies/config`: Update statistical parameters and automated background scheduling toggle for the tenant organization.
+
+---
+
+## 8. In-App Notification Subsystem (Milestone 7)
+
+- `GET /api/notifications`: Retrieve in-app alerts for tenant organization (`?unreadOnly=true&limit=20`).
+- `GET /api/notifications/unread-count`: Retrieve unread count for real-time header bell badge.
+- `PATCH /api/notifications/{id}/read`: Transition single notification to read status.
+- `POST /api/notifications/read-all`: Mark all notifications as read for current organization.
+

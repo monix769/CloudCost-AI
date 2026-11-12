@@ -137,6 +137,7 @@ CloudCost-AI/
 ├── database/                                 # Database scripts & schema documentation
 │   ├── schema.sql                            # Complete DDL script for MySQL 8+
 │   ├── milestone6_migration.sql              # B-Tree optimization indexes for FinOps analytics
+│   ├── milestone7_migration.sql              # Anomaly engine schema, history, configs & notifications
 │   └── README.md                             # Database design and migration guide
 │
 ├── sample_data/                              # Mock and seed test datasets
@@ -144,7 +145,7 @@ CloudCost-AI/
 │   └── sample_billing_records.json           # Sample cloud spend records (AWS, GCP)
 │
 ├── postman/                                  # API Testing Suite
-│   ├── CloudCost AI – API Testing.postman_collection.json # 10 folders, 100+ requests
+│   ├── CloudCost AI – API Testing.postman_collection.json # 11 folders, 110+ requests
 │   └── CloudCost AI – Local Development.postman_environment.json
 │
 └── docs/                                     # In-depth architectural & API documents
@@ -153,6 +154,7 @@ CloudCost-AI/
     ├── advanced-analytics.md                 # Milestone 6 FinOps analytics formulas & architecture
     ├── cost-forecasting.md                   # Statistical forecasting models (MA & SES) + 95% CI
     ├── finops-insights.md                    # Rule-based FinOps intelligence engine & severity tiers
+    ├── anomaly-detection.md                  # Milestone 7 Real-time statistical anomaly engine & rules
     ├── billing-ingestion.md                  # Multi-cloud ingestion, idempotency & deduplication
     ├── cloud-integrations.md                 # AWS, Azure & GCP credentials and SPI integrations
     ├── security.md                           # AES-256-GCM encryption & JWT RBAC tenant isolation
@@ -323,8 +325,19 @@ npm run build
 | `GET` | `/api/analytics/export/insights` | Stream actionable FinOps insights CSV | `AUTHENTICATED` |
 | `GET` | `/api/budgets` | List budgets with live calculated spend utilization | `AUTHENTICATED` |
 | `POST` | `/api/budgets` | Create budget allocation and alerting threshold | `AUTHENTICATED` |
-| `GET` | `/api/anomalies` | List AI-detected cost spikes with severity filters | `AUTHENTICATED` |
-| `PATCH`| `/api/anomalies/{id}/status` | Transition anomaly lifecycle status | `AUTHENTICATED` |
+| `GET` | `/api/anomalies` | List detected cost anomalies with filters & pagination | `AUTHENTICATED` |
+| `GET` | `/api/anomalies/{id}` | Retrieve detailed anomaly record & root-cause diagnostic | `AUTHENTICATED` |
+| `GET` | `/api/anomalies/summary` | Anomaly KPI metrics (critical count, potential excess spend) | `AUTHENTICATED` |
+| `GET` | `/api/anomalies/trends` | Daily anomaly detection counts & excess cost time series | `AUTHENTICATED` |
+| `POST` | `/api/anomalies/detect` | Execute multi-algorithm statistical anomaly detection scan | `AUTHENTICATED` |
+| `PATCH`| `/api/anomalies/{id}/status` | Transition lifecycle status (`OPEN`, `ACK`, `RESOLVED`, `DISMISSED`) | `AUTHENTICATED` |
+| `GET` | `/api/anomalies/{id}/history`| Retrieve audit history trail of status transitions | `AUTHENTICATED` |
+| `GET` | `/api/anomalies/config` | Inspect tenant anomaly detection parameters | `AUTHENTICATED` |
+| `PUT` | `/api/anomalies/config` | Update statistical thresholds & automated scanning toggle | `AUTHENTICATED` |
+| `GET` | `/api/notifications` | List in-app notifications (optional unread-only filter) | `AUTHENTICATED` |
+| `GET` | `/api/notifications/unread-count`| Get unread alert notification count badge | `AUTHENTICATED` |
+| `PATCH`| `/api/notifications/{id}/read` | Mark single notification as read | `AUTHENTICATED` |
+| `POST` | `/api/notifications/read-all`| Mark all notifications as read for current organization | `AUTHENTICATED` |
 | `GET` | `/swagger-ui.html` | Interactive Swagger UI API documentation | Public |
 | `GET` | `/v3/api-docs` | OpenAPI 3.0 raw specification JSON | Public |
 
@@ -393,7 +406,22 @@ Configure security settings in environment variables or `application.properties`
   - [x] React 19 FinOps Analytics Dashboard (`AnalyticsPage.jsx`) with interactive Chart.js visualizations
   - [x] Database query optimization with composite B-Tree indexes (`idx_billing_org_period`, etc.)
   - [x] 100% Automated Verification: 105 JUnit 5 & Mockito Tests Passed, 20-Request Postman Test Suite Added, Frontend Production Build Succeeded
-- [ ] **Milestone 7 — Real-Time Cost Anomaly Detection Engine (Upcoming)**
-  - [ ] Statistical Z-Score, rolling IQR, and Isolation Forest algorithms for cost spike alerting
+- [x] **Milestone 7 — Real-Time Cost Anomaly Detection Engine**
+  - [x] Native Java 21 statistical anomaly detection engine with 4 distinct detector strategies:
+    - [x] Z-Score Outlier Detection (mean, sample standard deviation, safe zero-variance handling, configurable $\sigma$ thresholds)
+    - [x] Moving Average Deviation (rolling $k$-day window baseline comparison, percentage deviation)
+    - [x] Spending Spike Detection (sudden overnight and daily cost surge evaluation against historical baselines)
+    - [x] Budget-Based Detection (near-capacity warning at 90% and critical limit breach at 100% utilization)
+  - [x] Anomaly Lifecycle Management with state transitions (`OPEN`, `ACKNOWLEDGED`, `RESOLVED`, `DISMISSED`)
+  - [x] Transition History Audit Trail (`CostAnomalyHistory`) capturing operator email, timestamps, and notes
+  - [x] Tenant-Level Detection Configuration (`AnomalyDetectionConfig`) with customizable thresholds
+  - [x] Automated Scheduled Detection (`AnomalyDetectionScheduler`) with independent multi-tenant iteration
+  - [x] Concurrency Lock Management (`AnomalyDetectionLockManager`) with atomic in-memory locking
+  - [x] In-App Notification Subsystem (`NotificationService`) with real-time unread counter badge in header
+  - [x] Deduplication Guards: prevents spamming duplicate open anomalies or repeat notifications for the same resource
+  - [x] React 19 Anomaly Dashboard (`AnomalyDetectionPage.jsx`) with KPI ribbon, dual Chart.js visualizations, search, filter toolbar, pagination, detailed inspection drawer, and settings modal
+  - [x] 100% Automated Verification: 129 JUnit 5 & Mockito Tests Passed (0 failures), 10-Request Postman Test Suite Added (Folder 11), Frontend Production Build Succeeded
+- [ ] **Milestone 8 — Automated Cost Optimization & Rightsizing Engine (Upcoming)**
+  - [ ] Cloud rightsizing recommendations, idle resource detection, and reserved capacity planning
 
 

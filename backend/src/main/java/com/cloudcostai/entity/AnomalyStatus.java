@@ -7,6 +7,7 @@ public enum AnomalyStatus {
     OPEN("OPEN"),
     ACKNOWLEDGED("ACKNOWLEDGED"),
     RESOLVED("RESOLVED"),
+    DISMISSED("DISMISSED"),
     IGNORED("IGNORED");
 
     private final String value;
@@ -25,11 +26,19 @@ public enum AnomalyStatus {
         if (text == null || text.trim().isEmpty()) {
             return OPEN;
         }
+        String clean = text.trim();
         for (AnomalyStatus s : AnomalyStatus.values()) {
-            if (s.name().equalsIgnoreCase(text.trim()) || s.value.equalsIgnoreCase(text.trim())) {
+            if (s.name().equalsIgnoreCase(clean) || s.value.equalsIgnoreCase(clean)) {
                 return s;
             }
         }
-        throw new IllegalArgumentException("Unknown anomaly status: '" + text + "'. Supported values: OPEN, ACKNOWLEDGED, RESOLVED, IGNORED");
+        // Handle common FinOps synonyms
+        if ("DISMISS".equalsIgnoreCase(clean)) {
+            return DISMISSED;
+        }
+        if ("IGNORE".equalsIgnoreCase(clean)) {
+            return DISMISSED;
+        }
+        throw new IllegalArgumentException("Unknown anomaly status: '" + text + "'. Supported values: OPEN, ACKNOWLEDGED, RESOLVED, DISMISSED, IGNORED");
     }
 }

@@ -12,10 +12,13 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Payload to transition an anomaly's operational status")
+@Schema(description = "Request body for updating anomaly workflow status")
 public class AnomalyStatusUpdateRequest {
 
-    @NotNull(message = "Status is required (OPEN, ACKNOWLEDGED, RESOLVED, IGNORED)")
-    @Schema(description = "Target anomaly status", example = "ACKNOWLEDGED")
+    @NotNull(message = "Status cannot be null")
+    @Schema(description = "Target status (OPEN, ACKNOWLEDGED, RESOLVED, DISMISSED, IGNORED)", example = "ACKNOWLEDGED")
     private AnomalyStatus status;
+
+    @Schema(description = "Optional notes or resolution comments from FinOps operator", example = "Investigated RDS instance. Autoscaling burst resolved by indexing key tables.")
+    private String notes;
 }

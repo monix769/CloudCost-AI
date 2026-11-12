@@ -3,6 +3,7 @@ import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { useSystem } from '../context/SystemContext';
 import { useAuth } from '../context/AuthContext';
 import ConnectionBadge from './ConnectionBadge';
+import notificationService from '../services/notificationService';
 import {
   Menu,
   Bell,
@@ -16,6 +17,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   Sparkles,
+  Check,
 } from 'lucide-react';
 
 export default function Header({ setMobileOpen, collapsed, setCollapsed }) {
@@ -28,8 +30,58 @@ export default function Header({ setMobileOpen, collapsed, setCollapsed }) {
   const [profileOpen, setProfileOpen] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState('Month-to-Date (Nov 2026)');
 
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifLoading, setNotifLoading] = useState(false);
+
   const notifRef = useRef(null);
   const profileRef = useRef(null);
+
+  const fetchNotificationData = async () => {
+    try {
+      setNotifLoading(true);
+      const [count, items] = await Promise.all([
+        notificationService.getUnreadCount(),
+        notificationService.getNotifications({ limit: 15 }),
+      ]);
+      setUnreadCount(count);
+      setNotifications(items || []);
+    } catch (err) {
+      console.warn('Failed to fetch notifications:', err.message);
+    } finally {
+      setNotifLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchNotificationData();
+      const interval = setInterval(fetchNotificationData, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [user]);
+
+  const handleMarkAllRead = async () => {
+    try {
+      await notificationService.markAllAsRead();
+      setUnreadCount(0);
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    } catch (err) {
+      console.error('Error marking all as read:', err.message);
+    }
+  };
+
+  const handleMarkOneRead = async (id) => {
+    try {
+      await notificationService.markAsRead(id);
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
+      );
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+    } catch (err) {
+      console.error('Error marking notification as read:', err.message);
+    }
+  };
 
   const handleLogout = async () => {
     setProfileOpen(false);
@@ -219,54 +271,100 @@ export default function Header({ setMobileOpen, collapsed, setCollapsed }) {
           {/* Notifications Dropdown */}
           <div className="relative" ref={notifRef}>
             <button
-              onClick={() => setNotificationsOpen(!notificationsOpen)}
+              onClick={() => {
+                setNotificationsOpen(!notificationsOpen);
+                if (!notificationsOpen) fetchNotificationData();
+              }}
               className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-navy-800/80 border border-transparent hover:border-slate-800 transition-colors relative"
               title="Notifications"
             >
               <Bell className="w-4 h-4" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-blue-500 ring-2 ring-navy-950"></span>
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[9px] font-bold ring-2 ring-navy-950 font-mono animate-pulse">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </button>
 
             {notificationsOpen && (
               <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl glass-panel border border-white/[0.1] shadow-2xl p-4 z-50 animate-fadeIn space-y-3">
                 <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-                  <span className="text-xs font-bold text-white uppercase font-mono tracking-wider">
-                    FinOps Notifications (2 New)
-                  </span>
-                  <button
-                    onClick={() => setNotificationsOpen(false)}
-                    className="text-[11px] text-blue-400 hover:underline"
-                  >
-                    Mark all read
-                  </button>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs font-bold text-white uppercase font-mono tracking-wider">
+                      FinOps Alerts
+                    </span>
+                    {unreadCount > 0 && (
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                        {unreadCount} New
+                      </span>
+                    )}
+                  </div>
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={handleMarkAllRead}
+                      className="text-[11px] text-blue-400 hover:underline"
+                    >
+                      Mark all read
+                    </button>
+                  )}
                 </div>
 
                 <div className="space-y-2 max-h-72 overflow-y-auto">
-                  {sampleNotifications.map((n) => (
-                    <div
-                      key={n.id}
-                      className={`p-3 rounded-xl border text-xs space-y-1 transition-colors ${
-                        n.unread
-                          ? 'bg-blue-950/30 border-blue-500/30 text-slate-200'
-                          : 'bg-navy-900/40 border-slate-800 text-slate-400'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold text-white">{n.title}</span>
-                        <span className="text-[10px] font-mono text-slate-400">{n.time}</span>
-                      </div>
-                      <p className="text-[11px] text-slate-300">{n.desc}</p>
+                  {notifications.length === 0 ? (
+                    <div className="py-6 text-center text-xs text-slate-500 font-mono">
+                      No notifications found
                     </div>
-                  ))}
+                  ) : (
+                    notifications.map((n) => (
+                      <div
+                        key={n.id}
+                        onClick={() => !n.isRead && handleMarkOneRead(n.id)}
+                        className={`p-3 rounded-xl border text-xs space-y-1.5 transition-colors cursor-pointer ${
+                          !n.isRead
+                            ? 'bg-blue-950/40 border-blue-500/40 text-slate-200'
+                            : 'bg-navy-900/30 border-slate-800 text-slate-400 opacity-80'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center space-x-1.5 truncate">
+                            <span
+                              className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border ${
+                                n.severity === 'CRITICAL'
+                                  ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                                  : n.severity === 'HIGH'
+                                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                                  : 'bg-blue-500/20 text-blue-300 border-blue-500/40'
+                              }`}
+                            >
+                              {n.severity || 'ALERT'}
+                            </span>
+                            <span className="font-semibold text-white truncate text-[11px]">
+                              {n.title}
+                            </span>
+                          </div>
+                          {!n.isRead && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0"></span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-slate-300 leading-relaxed line-clamp-2">
+                          {n.message}
+                        </p>
+                        <div className="text-[9px] font-mono text-slate-500">
+                          {n.createdAt ? new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recent'}
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
 
                 <div className="pt-2 border-t border-slate-800 text-center">
                   <Link
                     to="/anomalies"
                     onClick={() => setNotificationsOpen(false)}
-                    className="text-xs font-semibold text-blue-400 hover:text-blue-300"
+                    className="text-xs font-semibold text-blue-400 hover:text-blue-300 inline-flex items-center space-x-1"
                   >
-                    View Anomaly Center →
+                    <span>Open Anomaly Detection Center</span>
+                    <span>→</span>
                   </Link>
                 </div>
               </div>
