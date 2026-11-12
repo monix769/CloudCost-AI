@@ -1,4 +1,4 @@
-# CloudCost AI – REST API Specification (Milestones 1–6)
+# CloudCost AI – REST API Specification (Milestones 1–8)
 
 ## Overview & Base Configuration
 - **Base URL**: `http://localhost:8080`
@@ -251,4 +251,32 @@ All Milestone 6 endpoints require `Authorization: Bearer <TOKEN>` and strictly s
 - `GET /api/notifications/unread-count`: Retrieve unread count for real-time header bell badge.
 - `PATCH /api/notifications/{id}/read`: Transition single notification to read status.
 - `POST /api/notifications/read-all`: Mark all notifications as read for current organization.
+
+---
+
+## 9. Automated Cost Optimization & Rightsizing Engine (Milestone 8)
+
+### 9.1 Optimization Overview & Recommendations
+- `GET /api/optimization/overview`: Returns KPI metrics (`totalPotentialMonthlySavings`, `totalPotentialAnnualSavings`, `totalRealizedMonthlySavings`, `totalRealizedAnnualSavings`, priority counts, and status counts).
+- `GET /api/optimization/recommendations`: Filterable paginated list of recommendations:
+  - `provider`: `AWS`, `AZURE`, `GCP`
+  - `type`: `RIGHTSIZING`, `IDLE_RESOURCE`, `COMMITMENT_SAVINGS_PLAN`, `COMMITMENT_RESERVED_INSTANCE`, `MODERNIZATION`
+  - `priority`: `CRITICAL`, `HIGH`, `MEDIUM`, `LOW`
+  - `status`: `NEW`, `REVIEWED`, `APPROVED`, `IMPLEMENTED`, `REJECTED`
+  - `minSavings`: Minimum monthly savings filter
+  - `search`: Substring filter on resource ID, name, or type
+  - `page`, `size`, `direction`: Pagination and sorting parameters (default sorted by `estimatedMonthlySavings` descending)
+- `GET /api/optimization/recommendations/{id}`: Detailed recommendation with telemetry enrichment (CPU avg, CPU peak, memory, runtime).
+
+### 9.2 Recommendation Lifecycle & History
+- `PATCH /api/optimization/recommendations/{id}/status`: Transition status (`REVIEWED`, `APPROVED`, `IMPLEMENTED`, `REJECTED`) with operator notes and optional `realizedMonthlySavings`.
+- `GET /api/optimization/recommendations/{id}/history`: Retrieve full chronological audit log of all status transitions for the recommendation.
+
+### 9.3 Savings & Telemetry Analytics
+- `GET /api/optimization/savings-summary`: Aggregated breakdown of monthly savings opportunities across providers, recommendation categories, and resource types.
+- `GET /api/optimization/resource-utilization`: Paginated list of monitored resource utilization snapshots with CPU/memory telemetry and status classification (`HEALTHY`, `UNDERUTILIZED`, `IDLE`, `MONITORING_REQUIRED`).
+- `GET /api/optimization/commitment-analysis`: Evaluates continuous 30-day baseline compute expenditure and models 1-Year (28% discount) and 3-Year (42% discount) Savings Plans/RIs with explicit assumptions.
+- `POST /api/optimization/analyze`: Trigger an on-demand analysis scan across all cloud accounts.
+- `GET /api/optimization/export`: Download full recommendations report in CSV format (`cost-optimization-recommendations.csv`).
+
 

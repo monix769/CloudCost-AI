@@ -211,4 +211,24 @@ public interface BillingRecordRepository extends JpaRepository<BillingRecord, Lo
 
     List<BillingRecord> findByOrganizationIdAndBillingPeriodStartBetweenOrderByBillingPeriodStartAsc(
             Long organizationId, LocalDate startDate, LocalDate endDate);
+
+    @Query("SELECT COALESCE(SUM(b.costAmount), 0) FROM BillingRecord b " +
+           "WHERE b.organization.id = :orgId AND b.resourceId = :resourceId")
+    BigDecimal sumCostByOrganizationIdAndResourceId(
+            @Param("orgId") Long orgId, @Param("resourceId") String resourceId);
+
+    @Query("SELECT COALESCE(SUM(b.costAmount), 0) FROM BillingRecord b " +
+           "WHERE b.organization.id = :orgId " +
+           "AND (LOWER(b.serviceName) LIKE '%ec2%' OR LOWER(b.serviceName) LIKE '%compute%' OR LOWER(b.serviceName) LIKE '%virtual%') " +
+           "AND b.billingPeriodStart >= :startDate")
+    BigDecimal sumComputeCostSince(
+            @Param("orgId") Long orgId, @Param("startDate") LocalDate startDate);
+
+    @Query("SELECT b.billingPeriodStart, SUM(b.costAmount) FROM BillingRecord b " +
+           "WHERE b.organization.id = :orgId " +
+           "AND (LOWER(b.serviceName) LIKE '%ec2%' OR LOWER(b.serviceName) LIKE '%compute%' OR LOWER(b.serviceName) LIKE '%virtual%') " +
+           "AND b.billingPeriodStart >= :startDate " +
+           "GROUP BY b.billingPeriodStart ORDER BY b.billingPeriodStart ASC")
+    List<Object[]> findDailyComputeCostsSince(
+            @Param("orgId") Long orgId, @Param("startDate") LocalDate startDate);
 }

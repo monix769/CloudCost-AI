@@ -421,7 +421,19 @@ Configure security settings in environment variables or `application.properties`
   - [x] Deduplication Guards: prevents spamming duplicate open anomalies or repeat notifications for the same resource
   - [x] React 19 Anomaly Dashboard (`AnomalyDetectionPage.jsx`) with KPI ribbon, dual Chart.js visualizations, search, filter toolbar, pagination, detailed inspection drawer, and settings modal
   - [x] 100% Automated Verification: 129 JUnit 5 & Mockito Tests Passed (0 failures), 10-Request Postman Test Suite Added (Folder 11), Frontend Production Build Succeeded
-- [ ] **Milestone 8 — Automated Cost Optimization & Rightsizing Engine (Upcoming)**
-  - [ ] Cloud rightsizing recommendations, idle resource detection, and reserved capacity planning
+- [x] **Milestone 8 — Automated Cost Optimization & Rightsizing Engine**
+  - [x] Native Java 21 explainable rightsizing engine evaluating instance sizing matrices across AWS (`c5`, `m5`, `t3`, `r5`, `db.m5`), Azure (`Standard_D`, `Standard_E`, `Standard_B`), and GCP (`n2-standard`, `e2-standard`)
+  - [x] Telemetry integrity safety guard: Evaluates genuine CPU/memory metrics without fabricating synthetic data; flags unmonitored resources with `MONITORING_REQUIRED`
+  - [x] Idle resource detection engine identifying unattached storage volumes (EBS/Disks), idle load balancers with 0 targets/traffic, and stopped compute instances
+  - [x] Baseline commitment analysis modeling continuous 30-day compute expenditure for 1-Year (28% discount) and 3-Year (42% discount) Savings Plans & Reserved Instances with conservative 75% coverage
+  - [x] Non-destructive advisory guarantee: strictly provides recommendations and never modifies, stops, or terminates live cloud resources automatically
+  - [x] Exact financial savings math using `BigDecimal` (`HALF_UP` rounding): Potential monthly savings, projected annual savings, realized monthly/annual savings, and net savings percentages
+  - [x] Recommendation lifecycle state machine (`NEW`, `REVIEWED`, `APPROVED`, `IMPLEMENTED`, `REJECTED`) with complete audit log trail (`OptimizationRecommendationHistory`)
+  - [x] In-app notification integration for high and critical priority cost-saving opportunities with deduplication guards
+  - [x] High-performance streaming CSV export endpoint (`/api/optimization/export`)
+  - [x] Database migration (`milestone8_migration.sql`) & schema definitions with B-Tree indexes for fast filtered lookups
+  - [x] React 19 Interactive FinOps Dashboard (`CostOptimizationPage.jsx`) with KPI ribbon, dual Chart.js visualizations (by provider, by category), sub-tabs (Recommendations, Commitment Planner, Resource Telemetry), search, filter toolbar, and slide-over audit drawer
+  - [x] 100% Automated Verification: 142 JUnit 5 & Mockito Tests Passed (0 failures), 12-Request Postman Test Suite Added (Folder 12), Frontend Production Build Succeeded
+
 
 

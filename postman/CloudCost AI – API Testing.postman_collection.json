@@ -2447,7 +2447,195 @@
           }
         }
       ]
-    }
+    },
+    {
+      "name": "12. Cost Optimization & Rightsizing Engine",
+      "item": [
+        {
+          "name": "1. Optimization Overview KPIs",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "var res = pm.response.json();",
+                  "pm.test('Response structure valid', function () {",
+                  "    pm.expect(res.success).to.be.true;",
+                  "    pm.expect(res.data).to.have.property('totalPotentialMonthlySavings');",
+                  "    pm.expect(res.data).to.have.property('totalPotentialAnnualSavings');",
+                  "    pm.expect(res.data).to.have.property('totalRealizedMonthlySavings');",
+                  "    pm.expect(res.data).to.have.property('totalRecommendationsCount');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/optimization/overview"
+          }
+        },
+        {
+          "name": "2. List Recommendations (Paged)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "var res = pm.response.json();",
+                  "pm.test('Contains paged content', function () {",
+                  "    pm.expect(res.data).to.have.property('content');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/optimization/recommendations?page=0&size=10"
+          }
+        },
+        {
+          "name": "3. Filter Recommendations (Provider & Priority)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "var res = pm.response.json();",
+                  "pm.test('Filter response success', function () {",
+                  "    pm.expect(res.success).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/optimization/recommendations?provider=AWS&priority=HIGH"
+          }
+        },
+        {
+          "name": "4. Trigger Optimization Analysis Scan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "var res = pm.response.json();",
+                  "pm.test('Scan status returned', function () {",
+                  "    pm.expect(res.data).to.have.property('status');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/optimization/analyze"
+          }
+        },
+        {
+          "name": "5. Savings Opportunity Summary Breakdown",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "var res = pm.response.json();",
+                  "pm.test('Breakdown categories present', function () {",
+                  "    pm.expect(res.data).to.have.property('byProvider');",
+                  "    pm.expect(res.data).to.have.property('byRecommendationType');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/optimization/savings-summary"
+          }
+        },
+        {
+          "name": "6. Monitored Resource Utilization Telemetry",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "var res = pm.response.json();",
+                  "pm.test('Contains telemetry records', function () {",
+                  "    pm.expect(res.data).to.have.property('content');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/optimization/resource-utilization?page=0&size=10"
+          }
+        },
+        {
+          "name": "7. Baseline Commitment Analysis",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "var res = pm.response.json();",
+                  "pm.test('Commitment projections valid', function () {",
+                  "    pm.expect(res.data).to.have.property('baselineMonthlyComputeSpend');",
+                  "    pm.expect(res.data).to.have.property('estimated1YearSavingsPercent');",
+                  "    pm.expect(res.data.assumptions).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/optimization/commitment-analysis"
+          }
+        },
+        {
+          "name": "8. Export Recommendations CSV",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Content-Type is text/csv', function () {",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('text/csv');",
+                  "});",
+                  "pm.test('Content-Disposition attachment', function () {",
+                  "    pm.expect(pm.response.headers.get('Content-Disposition')).to.include('attachment');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/optimization/export"
+          }
+        }
       ]
     }
   ],

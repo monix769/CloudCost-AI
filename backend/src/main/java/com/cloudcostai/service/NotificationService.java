@@ -4,6 +4,7 @@ import com.cloudcostai.dto.NotificationResponse;
 import com.cloudcostai.dto.UnreadNotificationCountResponse;
 import com.cloudcostai.entity.CostAnomaly;
 import com.cloudcostai.entity.Notification;
+import com.cloudcostai.entity.OptimizationRecommendation;
 import com.cloudcostai.entity.Organization;
 import com.cloudcostai.exception.ResourceNotFoundException;
 import com.cloudcostai.repository.NotificationRepository;
@@ -120,6 +121,50 @@ public class NotificationService {
 
         notificationRepository.save(notification);
         log.info("Created in-app {} notification for anomaly [ID: {}] in org [{}]", anomaly.getSeverity(), anomalyId, orgId);
+    }
+
+    @Transactional
+    public void createOptimizationNotification(OptimizationRecommendation rec) {
+        if (rec == null || rec.getOrganization() == null) return;
+
+        // In-app notifications only target CRITICAL and HIGH priority recommendations
+        if (rec.getPriority() == null ||
+                (!"CRITICAL".equalsIgnoreCase(rec.getPriority().name()) &&
+                 !"HIGH".equalsIgnoreCase(rec.getPriority().name()))) {
+            return;
+        }
+
+        Long orgId = rec.getOrganization().getId();
+        Long recId = rec.getId();
+
+        // Safe deduplication: never generate duplicate notification for the same recommendation record
+        if (recId != null && notificationRepository.existsByOrganizationIdAndReferenceTypeAndReferenceId(orgId, "OPTIMIZATION_RECOMMENDATION", recId)) {
+            log.debug("Notification for optimization [ID: {}] already exists for org [{}]. Skipping duplicate.", recId, orgId);
+            return;
+        }
+
+        String title = String.format("%s: %s Optimization Identified", rec.getPriority(), rec.getResourceType());
+        String message = String.format("Potential savings: $%s/mo ($%s/yr) on %s (%s). Recommended: %s.",
+                rec.getEstimatedMonthlySavings() != null ? rec.getEstimatedMonthlySavings().setScale(2, java.math.RoundingMode.HALF_UP).toPlainString() : "0.00",
+                rec.getEstimatedAnnualSavings() != null ? rec.getEstimatedAnnualSavings().setScale(2, java.math.RoundingMode.HALF_UP).toPlainString() : "0.00",
+                rec.getResourceName() != null ? rec.getResourceName() : rec.getResourceId(),
+                rec.getCurrentConfig(),
+                rec.getSuggestedConfig());
+
+        Notification notification = Notification.builder()
+                .organization(rec.getOrganization())
+                .title(title)
+                .message(message)
+                .severity(rec.getPriority().name())
+                .notificationType("OPTIMIZATION_IDENTIFIED")
+                .referenceId(recId)
+                .referenceType("OPTIMIZATION_RECOMMENDATION")
+                .isRead(false)
+                .createdAt(Instant.now())
+                .build();
+
+        notificationRepository.save(notification);
+        log.info("Created in-app {} notification for optimization [ID: {}] in org [{}]", rec.getPriority(), recId, orgId);
     }
 
     private NotificationResponse toResponse(Notification n) {
