@@ -136,6 +136,7 @@ CloudCost-AI/
 │
 ├── database/                                 # Database scripts & schema documentation
 │   ├── schema.sql                            # Complete DDL script for MySQL 8+
+│   ├── milestone6_migration.sql              # B-Tree optimization indexes for FinOps analytics
 │   └── README.md                             # Database design and migration guide
 │
 ├── sample_data/                              # Mock and seed test datasets
@@ -143,12 +144,18 @@ CloudCost-AI/
 │   └── sample_billing_records.json           # Sample cloud spend records (AWS, GCP)
 │
 ├── postman/                                  # API Testing Suite
-│   ├── CloudCost AI – API Testing.postman_collection.json
+│   ├── CloudCost AI – API Testing.postman_collection.json # 10 folders, 100+ requests
 │   └── CloudCost AI – Local Development.postman_environment.json
 │
 └── docs/                                     # In-depth architectural & API documents
     ├── architecture.md                       # Comprehensive design specifications
-    ├── api-documentation.md                  # REST endpoint definitions & payloads
+    ├── backend-api.md                        # Complete REST endpoint specifications & contracts
+    ├── advanced-analytics.md                 # Milestone 6 FinOps analytics formulas & architecture
+    ├── cost-forecasting.md                   # Statistical forecasting models (MA & SES) + 95% CI
+    ├── finops-insights.md                    # Rule-based FinOps intelligence engine & severity tiers
+    ├── billing-ingestion.md                  # Multi-cloud ingestion, idempotency & deduplication
+    ├── cloud-integrations.md                 # AWS, Azure & GCP credentials and SPI integrations
+    ├── security.md                           # AES-256-GCM encryption & JWT RBAC tenant isolation
     └── deployment.md                         # Vercel & Render deployment guide
 ```
 
@@ -297,6 +304,23 @@ npm run build
 | `GET` | `/api/costs/by-provider`| Aggregated cost distribution by cloud provider | `AUTHENTICATED` |
 | `GET` | `/api/costs/by-service` | Top spend by cloud service | `AUTHENTICATED` |
 | `GET` | `/api/costs/trends` | Monthly time-series expenditure trends | `AUTHENTICATED` |
+| `GET` | `/api/analytics/overview` | Unified FinOps executive summary & KPI metrics | `AUTHENTICATED` |
+| `GET` | `/api/analytics/spending-trends` | Temporal trends (Daily, Weekly, Monthly, Quarterly) | `AUTHENTICATED` |
+| `GET` | `/api/analytics/provider-comparison` | Multi-cloud expenditure share and percentage split | `AUTHENTICATED` |
+| `GET` | `/api/analytics/service-breakdown` | Ranked service expenditure & percentage contributions | `AUTHENTICATED` |
+| `GET` | `/api/analytics/account-breakdown` | Cost per cloud account & provider mapping | `AUTHENTICATED` |
+| `GET` | `/api/analytics/month-over-month` | MoM delta comparison with provider & service shifts | `AUTHENTICATED` |
+| `GET` | `/api/analytics/forecast` | Statistical forecasting (Moving Avg & SES) + 95% CI | `AUTHENTICATED` |
+| `GET` | `/api/analytics/budget-utilization` | Budget burn rates, projected EOP, & health status | `AUTHENTICATED` |
+| `GET` | `/api/analytics/cost-allocation` | Multi-dimensional allocation (Provider, Account, Service, Region) | `AUTHENTICATED` |
+| `GET` | `/api/analytics/insights` | Deterministic rule-based FinOps recommendations | `AUTHENTICATED` |
+| `GET` | `/api/analytics/top-spending-services` | Top-N cloud services by expenditure | `AUTHENTICATED` |
+| `GET` | `/api/analytics/top-spending-accounts` | Top-N cloud accounts by expenditure | `AUTHENTICATED` |
+| `GET` | `/api/analytics/export/spending-trends` | Stream spending trends CSV report | `AUTHENTICATED` |
+| `GET` | `/api/analytics/export/provider-comparison` | Stream multi-cloud provider comparison CSV | `AUTHENTICATED` |
+| `GET` | `/api/analytics/export/service-breakdown` | Stream service breakdown CSV report | `AUTHENTICATED` |
+| `GET` | `/api/analytics/export/forecast` | Stream cost forecast projections CSV | `AUTHENTICATED` |
+| `GET` | `/api/analytics/export/insights` | Stream actionable FinOps insights CSV | `AUTHENTICATED` |
 | `GET` | `/api/budgets` | List budgets with live calculated spend utilization | `AUTHENTICATED` |
 | `POST` | `/api/budgets` | Create budget allocation and alerting threshold | `AUTHENTICATED` |
 | `GET` | `/api/anomalies` | List AI-detected cost spikes with severity filters | `AUTHENTICATED` |
@@ -354,6 +378,22 @@ Configure security settings in environment variables or `application.properties`
   - [x] Explicit Provenance Tracking (`REAL_PROVIDER`, `MOCK_PROVIDER`, `CSV_UPLOAD`, `MANUAL`)
   - [x] React 19 UI: Provider Capabilities Cards, Connect Credentials Modal, Validation, Sync Now, & Audit Logs
   - [x] 100% Automated Verification: 83 JUnit 5 & Mockito Tests Passed, 66 Postman Newman Requests (89 Assertions) Passed, Frontend Production Build Succeeded
-- [ ] **Milestone 6 — Automated Rightsizing & Cloud Guardrail Enforcement (Upcoming)**
-  - [ ] Scheduled automated resource shutdown and rightsizing approval workflows
+- [x] **Milestone 6 — Advanced FinOps Analytics & Cost Forecasting**
+  - [x] Advanced cloud spending metrics (Total spend, MTD, MoM, daily velocity, peak/trough days)
+  - [x] Multi-cloud cost comparison with real provider distribution percentages (AWS, Azure, GCP)
+  - [x] Temporal spending trends across Daily, Weekly, Monthly, and Quarterly granularities
+  - [x] Month-over-Month (MoM) financial comparison with provider, service breakdowns, and explainable insights
+  - [x] Native Java 21 statistical forecasting engine (Moving Average & Simple Exponential Smoothing)
+  - [x] Forecast horizons (7D, 30D, 90D) with mathematically derived 95% confidence intervals
+  - [x] Budget utilization analytics (allocated, spend, burn rate, projected EOP, and health statuses: `HEALTHY`, `WARNING`, `CRITICAL`, `EXCEEDED`)
+  - [x] Multi-dimensional cost allocation (Cloud Provider, Account, Service, Region)
+  - [x] Rule-based FinOps insight engine evaluating growth spikes, concentration risk, and budget breaches
+  - [x] Strict multi-currency isolation and BigDecimal arithmetic precision
+  - [x] High-performance streaming CSV export endpoints for all analytics views
+  - [x] React 19 FinOps Analytics Dashboard (`AnalyticsPage.jsx`) with interactive Chart.js visualizations
+  - [x] Database query optimization with composite B-Tree indexes (`idx_billing_org_period`, etc.)
+  - [x] 100% Automated Verification: 105 JUnit 5 & Mockito Tests Passed, 20-Request Postman Test Suite Added, Frontend Production Build Succeeded
+- [ ] **Milestone 7 — Real-Time Cost Anomaly Detection Engine (Upcoming)**
+  - [ ] Statistical Z-Score, rolling IQR, and Isolation Forest algorithms for cost spike alerting
+
 

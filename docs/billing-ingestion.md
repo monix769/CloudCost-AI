@@ -119,3 +119,14 @@ Every synchronization run (manual or scheduled) creates a persistent audit entry
 - `sync_start_time` & `sync_end_time`: Execution latency tracking.
 - `sync_status`: `SUCCESS` or `FAILED`.
 - `error_summary`: Sanitized diagnostic message if failure occurred (secrets purged).
+
+---
+
+## 7. Integration with FinOps Analytics & Forecasting (Milestone 6)
+
+Once billing records are securely ingested and fingerprinted, they immediately feed the Milestone 6 FinOps analytics pipelines:
+1. **Aggregated Projections**: Fast Spring Data JPA interface projections (`DailyCostSummary`, `AccountCostSummary`, `RegionCostSummary`) query the indexed `billing_records` table with sub-100ms response times.
+2. **Deterministic Spending Trends**: Daily aggregates are grouped into daily, weekly, monthly, and quarterly time series with missing dates normalized to zero-spend points.
+3. **Statistical Forecasting Inputs**: Ingested historical daily records form the time-ordered sequence $y_1, \dots, y_n$ input into `MovingAverageForecaster` and `ExponentialSmoothingForecaster`.
+4. **Automated Rule Evaluation**: Synchronization timestamps recorded in `sync_history` are monitored by `FinOpsInsightService` to flag stale cloud accounts exceeding the 48-hour sync threshold (`RULE_STALE_SYNC`).
+

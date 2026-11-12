@@ -1,8 +1,12 @@
 package com.cloudcostai.repository;
 
 import com.cloudcostai.entity.BillingRecord;
+import com.cloudcostai.entity.CloudProvider;
+import com.cloudcostai.repository.projection.AccountCostSummary;
+import com.cloudcostai.repository.projection.DailyCostSummary;
 import com.cloudcostai.repository.projection.MonthlyTrendSummary;
 import com.cloudcostai.repository.projection.ProviderCostSummary;
+import com.cloudcostai.repository.projection.RegionCostSummary;
 import com.cloudcostai.repository.projection.ServiceCostSummary;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -34,12 +38,34 @@ public interface BillingRecordRepository extends JpaRepository<BillingRecord, Lo
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate);
 
+    @Query("SELECT COALESCE(SUM(b.costAmount), 0) FROM BillingRecord b " +
+           "WHERE b.organization.id = :orgId " +
+           "AND (:currency IS NULL OR b.currency = :currency) " +
+           "AND (:startDate IS NULL OR b.billingPeriodStart >= :startDate) " +
+           "AND (:endDate IS NULL OR b.billingPeriodEnd <= :endDate)")
+    BigDecimal calculateTotalCost(
+            @Param("orgId") Long orgId,
+            @Param("currency") String currency,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
+
     @Query("SELECT COUNT(b) FROM BillingRecord b " +
            "WHERE b.organization.id = :orgId " +
            "AND (:startDate IS NULL OR b.billingPeriodStart >= :startDate) " +
            "AND (:endDate IS NULL OR b.billingPeriodEnd <= :endDate)")
     Long countRecords(
             @Param("orgId") Long orgId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
+
+    @Query("SELECT COUNT(b) FROM BillingRecord b " +
+           "WHERE b.organization.id = :orgId " +
+           "AND (:currency IS NULL OR b.currency = :currency) " +
+           "AND (:startDate IS NULL OR b.billingPeriodStart >= :startDate) " +
+           "AND (:endDate IS NULL OR b.billingPeriodEnd <= :endDate)")
+    Long countRecords(
+            @Param("orgId") Long orgId,
+            @Param("currency") String currency,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate);
 
@@ -54,6 +80,19 @@ public interface BillingRecordRepository extends JpaRepository<BillingRecord, Lo
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate);
 
+    @Query("SELECT ca.provider AS provider, SUM(b.costAmount) AS totalCost, COUNT(b) AS recordCount " +
+           "FROM BillingRecord b JOIN b.cloudAccount ca " +
+           "WHERE b.organization.id = :orgId " +
+           "AND (:currency IS NULL OR b.currency = :currency) " +
+           "AND (:startDate IS NULL OR b.billingPeriodStart >= :startDate) " +
+           "AND (:endDate IS NULL OR b.billingPeriodEnd <= :endDate) " +
+           "GROUP BY ca.provider ORDER BY SUM(b.costAmount) DESC")
+    List<ProviderCostSummary> aggregateCostByProvider(
+            @Param("orgId") Long orgId,
+            @Param("currency") String currency,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
+
     @Query("SELECT b.serviceName AS serviceName, ca.provider AS provider, SUM(b.costAmount) AS totalCost, COUNT(b) AS recordCount " +
            "FROM BillingRecord b JOIN b.cloudAccount ca " +
            "WHERE b.organization.id = :orgId " +
@@ -62,6 +101,73 @@ public interface BillingRecordRepository extends JpaRepository<BillingRecord, Lo
            "GROUP BY b.serviceName, ca.provider ORDER BY SUM(b.costAmount) DESC")
     List<ServiceCostSummary> aggregateCostByService(
             @Param("orgId") Long orgId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
+
+    @Query("SELECT b.serviceName AS serviceName, ca.provider AS provider, SUM(b.costAmount) AS totalCost, COUNT(b) AS recordCount " +
+           "FROM BillingRecord b JOIN b.cloudAccount ca " +
+           "WHERE b.organization.id = :orgId " +
+           "AND (:currency IS NULL OR b.currency = :currency) " +
+           "AND (:startDate IS NULL OR b.billingPeriodStart >= :startDate) " +
+           "AND (:endDate IS NULL OR b.billingPeriodEnd <= :endDate) " +
+           "GROUP BY b.serviceName, ca.provider ORDER BY SUM(b.costAmount) DESC")
+    List<ServiceCostSummary> aggregateCostByService(
+            @Param("orgId") Long orgId,
+            @Param("currency") String currency,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
+
+    @Query("SELECT ca.id AS accountId, ca.accountName AS accountName, ca.provider AS provider, SUM(b.costAmount) AS totalCost, COUNT(b) AS recordCount " +
+           "FROM BillingRecord b JOIN b.cloudAccount ca " +
+           "WHERE b.organization.id = :orgId " +
+           "AND (:currency IS NULL OR b.currency = :currency) " +
+           "AND (:startDate IS NULL OR b.billingPeriodStart >= :startDate) " +
+           "AND (:endDate IS NULL OR b.billingPeriodEnd <= :endDate) " +
+           "GROUP BY ca.id, ca.accountName, ca.provider ORDER BY SUM(b.costAmount) DESC")
+    List<AccountCostSummary> aggregateCostByAccount(
+            @Param("orgId") Long orgId,
+            @Param("currency") String currency,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
+
+    @Query("SELECT b.region AS region, ca.provider AS provider, SUM(b.costAmount) AS totalCost, COUNT(b) AS recordCount " +
+           "FROM BillingRecord b JOIN b.cloudAccount ca " +
+           "WHERE b.organization.id = :orgId " +
+           "AND (:currency IS NULL OR b.currency = :currency) " +
+           "AND (:startDate IS NULL OR b.billingPeriodStart >= :startDate) " +
+           "AND (:endDate IS NULL OR b.billingPeriodEnd <= :endDate) " +
+           "GROUP BY b.region, ca.provider ORDER BY SUM(b.costAmount) DESC")
+    List<RegionCostSummary> aggregateCostByRegion(
+            @Param("orgId") Long orgId,
+            @Param("currency") String currency,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
+
+    @Query("SELECT b.billingPeriodStart AS usageDate, SUM(b.costAmount) AS totalCost, COUNT(b) AS recordCount " +
+           "FROM BillingRecord b " +
+           "WHERE b.organization.id = :orgId " +
+           "AND (:currency IS NULL OR b.currency = :currency) " +
+           "AND (:startDate IS NULL OR b.billingPeriodStart >= :startDate) " +
+           "AND (:endDate IS NULL OR b.billingPeriodEnd <= :endDate) " +
+           "GROUP BY b.billingPeriodStart ORDER BY b.billingPeriodStart ASC")
+    List<DailyCostSummary> aggregateDailyCosts(
+            @Param("orgId") Long orgId,
+            @Param("currency") String currency,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
+
+    @Query("SELECT b.billingPeriodStart AS usageDate, SUM(b.costAmount) AS totalCost, COUNT(b) AS recordCount " +
+           "FROM BillingRecord b JOIN b.cloudAccount ca " +
+           "WHERE b.organization.id = :orgId " +
+           "AND (:currency IS NULL OR b.currency = :currency) " +
+           "AND (:provider IS NULL OR ca.provider = :provider) " +
+           "AND (:startDate IS NULL OR b.billingPeriodStart >= :startDate) " +
+           "AND (:endDate IS NULL OR b.billingPeriodEnd <= :endDate) " +
+           "GROUP BY b.billingPeriodStart ORDER BY b.billingPeriodStart ASC")
+    List<DailyCostSummary> aggregateDailyCostsByProvider(
+            @Param("orgId") Long orgId,
+            @Param("currency") String currency,
+            @Param("provider") CloudProvider provider,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate);
 
@@ -74,6 +180,20 @@ public interface BillingRecordRepository extends JpaRepository<BillingRecord, Lo
            "ORDER BY YEAR(b.billingPeriodStart) ASC, MONTH(b.billingPeriodStart) ASC")
     List<MonthlyTrendSummary> aggregateMonthlyTrends(
             @Param("orgId") Long orgId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
+
+    @Query("SELECT YEAR(b.billingPeriodStart) AS year, MONTH(b.billingPeriodStart) AS month, ca.provider AS provider, SUM(b.costAmount) AS totalCost " +
+           "FROM BillingRecord b JOIN b.cloudAccount ca " +
+           "WHERE b.organization.id = :orgId " +
+           "AND (:currency IS NULL OR b.currency = :currency) " +
+           "AND (:startDate IS NULL OR b.billingPeriodStart >= :startDate) " +
+           "AND (:endDate IS NULL OR b.billingPeriodEnd <= :endDate) " +
+           "GROUP BY YEAR(b.billingPeriodStart), MONTH(b.billingPeriodStart), ca.provider " +
+           "ORDER BY YEAR(b.billingPeriodStart) ASC, MONTH(b.billingPeriodStart) ASC")
+    List<MonthlyTrendSummary> aggregateMonthlyTrends(
+            @Param("orgId") Long orgId,
+            @Param("currency") String currency,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate);
 

@@ -1,7 +1,10 @@
 package com.cloudcostai.service;
 
+import com.cloudcostai.dto.BudgetItemUtilizationResponse;
+import com.cloudcostai.dto.BudgetHealthStatus;
 import com.cloudcostai.dto.BudgetRequest;
 import com.cloudcostai.dto.BudgetResponse;
+import com.cloudcostai.dto.BudgetUtilizationResponse;
 import com.cloudcostai.entity.Budget;
 import com.cloudcostai.entity.BudgetPeriod;
 import com.cloudcostai.entity.Organization;
@@ -18,7 +21,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -96,6 +101,123 @@ public class BudgetService {
         Organization org = organizationService.getCurrentUserOrganization();
         return budgetRepository.findByIdAndOrganizationId(id, org.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Budget", "id", id));
+    }
+
+    @Transactional(readOnly = true)
+    public BudgetUtilizationResponse getBudgetUtilizationAnalytics(String requestedCurrency) {
+        Organization org = organizationService.getCurrentUserOrganization();
+        Long orgId = org.getId();
+        List<Budget> budgets = budgetRepository.findByOrganizationId(orgId);
+
+        String activeCurrency = (requestedCurrency != null && !requestedCurrency.trim().isEmpty())
+                ? requestedCurrency.trim().toUpperCase()
+                : (budgets.isEmpty() ? "USD" : budgets.get(0).getCurrency());
+
+        BigDecimal totalAllocated = BigDecimal.ZERO;
+        BigDecimal totalCurrent = BigDecimal.ZERO;
+        BigDecimal totalProjected = BigDecimal.ZERO;
+        List<BudgetItemUtilizationResponse> items = new ArrayList<>();
+
+        LocalDate now = LocalDate.now();
+
+        for (Budget budget : budgets) {
+            BigDecimal limit = budget.getAmountLimit();
+            BigDecimal spend = calculateLiveSpendForBudget(budget, orgId);
+
+            totalAllocated = totalAllocated.add(limit);
+            totalCurrent = totalCurrent.add(spend);
+
+            BigDecimal remaining = limit.subtract(spend);
+            BigDecimal utilization = BigDecimal.ZERO;
+            if (limit.compareTo(BigDecimal.ZERO) > 0) {
+                utilization = spend.multiply(BigDecimal.valueOf(100)).divide(limit, 2, RoundingMode.HALF_UP);
+            }
+
+            int daysElapsed = Math.max(1, now.getDayOfMonth());
+            int totalDaysInPeriod = now.lengthOfMonth();
+            if (budget.getPeriod() == BudgetPeriod.QUARTERLY) {
+                totalDaysInPeriod = 90;
+                int currentQuarterMonth = ((now.getMonthValue() - 1) / 3) * 3 + 1;
+                LocalDate quarterStart = LocalDate.of(now.getYear(), currentQuarterMonth, 1);
+                daysElapsed = Math.max(1, (int) ChronoUnit.DAYS.between(quarterStart, now) + 1);
+            } else if (budget.getPeriod() == BudgetPeriod.ANNUAL) {
+                totalDaysInPeriod = now.isLeapYear() ? 366 : 365;
+                daysElapsed = Math.max(1, now.getDayOfYear());
+            }
+
+            BigDecimal burnRate = spend.divide(BigDecimal.valueOf(daysElapsed), 2, RoundingMode.HALF_UP);
+            BigDecimal projectedSpend = burnRate.multiply(BigDecimal.valueOf(totalDaysInPeriod)).setScale(2, RoundingMode.HALF_UP);
+            totalProjected = totalProjected.add(projectedSpend);
+
+            BudgetHealthStatus health;
+            if (utilization.compareTo(BigDecimal.valueOf(100.0)) >= 0) {
+                health = BudgetHealthStatus.EXCEEDED;
+            } else if (utilization.compareTo(BigDecimal.valueOf(90.0)) >= 0) {
+                health = BudgetHealthStatus.CRITICAL;
+            } else if (utilization.compareTo(BigDecimal.valueOf(70.0)) >= 0) {
+                health = BudgetHealthStatus.WARNING;
+            } else {
+                health = BudgetHealthStatus.HEALTHY;
+            }
+
+            String risk;
+            if (projectedSpend.compareTo(limit) > 0 || health == BudgetHealthStatus.EXCEEDED) {
+                risk = (utilization.compareTo(BigDecimal.valueOf(100.0)) >= 0) ? "CRITICAL" : "HIGH";
+            } else if (utilization.compareTo(BigDecimal.valueOf(70.0)) >= 0) {
+                risk = "MEDIUM";
+            } else {
+                risk = "LOW";
+            }
+
+            items.add(BudgetItemUtilizationResponse.builder()
+                    .budgetId(budget.getId())
+                    .budgetName(budget.getName())
+                    .amountLimit(limit.setScale(2, RoundingMode.HALF_UP))
+                    .currentSpend(spend.setScale(2, RoundingMode.HALF_UP))
+                    .remainingBudget(remaining.setScale(2, RoundingMode.HALF_UP))
+                    .utilizationPercentage(utilization)
+                    .burnRatePerDay(burnRate)
+                    .estimatedEndOfPeriodSpend(projectedSpend)
+                    .overspendingRisk(risk)
+                    .healthStatus(health)
+                    .period(budget.getPeriod())
+                    .alertThresholdPercentage(budget.getAlertThresholdPercentage())
+                    .build());
+        }
+
+        BigDecimal totalRemaining = totalAllocated.subtract(totalCurrent);
+        BigDecimal overallUtilization = BigDecimal.ZERO;
+        if (totalAllocated.compareTo(BigDecimal.ZERO) > 0) {
+            overallUtilization = totalCurrent.multiply(BigDecimal.valueOf(100))
+                    .divide(totalAllocated, 2, RoundingMode.HALF_UP);
+        }
+
+        BigDecimal projectedOverrun = totalProjected.compareTo(totalAllocated) > 0
+                ? totalProjected.subtract(totalAllocated).setScale(2, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
+
+        BudgetHealthStatus overallHealth;
+        if (overallUtilization.compareTo(BigDecimal.valueOf(100.0)) >= 0) {
+            overallHealth = BudgetHealthStatus.EXCEEDED;
+        } else if (overallUtilization.compareTo(BigDecimal.valueOf(90.0)) >= 0) {
+            overallHealth = BudgetHealthStatus.CRITICAL;
+        } else if (overallUtilization.compareTo(BigDecimal.valueOf(70.0)) >= 0) {
+            overallHealth = BudgetHealthStatus.WARNING;
+        } else {
+            overallHealth = BudgetHealthStatus.HEALTHY;
+        }
+
+        return BudgetUtilizationResponse.builder()
+                .totalAllocatedBudget(totalAllocated.setScale(2, RoundingMode.HALF_UP))
+                .totalCurrentSpend(totalCurrent.setScale(2, RoundingMode.HALF_UP))
+                .totalRemainingBudget(totalRemaining.setScale(2, RoundingMode.HALF_UP))
+                .overallUtilizationPercentage(overallUtilization)
+                .estimatedEndOfPeriodSpend(totalProjected.setScale(2, RoundingMode.HALF_UP))
+                .projectedOverrun(projectedOverrun)
+                .overallHealthStatus(overallHealth)
+                .currency(activeCurrency)
+                .budgetBreakdowns(items)
+                .build();
     }
 
     private BigDecimal calculateLiveSpendForBudget(Budget budget, Long orgId) {

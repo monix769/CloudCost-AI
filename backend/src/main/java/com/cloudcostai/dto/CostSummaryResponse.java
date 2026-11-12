@@ -13,7 +13,7 @@ import java.time.LocalDate;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Aggregated cloud cost summary")
+@Schema(description = "Aggregated cloud cost summary with FinOps velocity indicators")
 public class CostSummaryResponse {
 
     @Schema(description = "Total expenditure across all accounts within period", example = "43250.75")
@@ -34,4 +34,22 @@ public class CostSummaryResponse {
 
     @Schema(description = "Average expenditure per active day in window", example = "1441.69")
     private BigDecimal averageDailyCost;
+
+    @Schema(description = "Expenditure in current calendar month to date", example = "12800.50")
+    private BigDecimal currentMonthCost;
+
+    @Schema(description = "Expenditure in previous calendar month", example = "11400.00")
+    private BigDecimal previousMonthCost;
+
+    @Schema(description = "Date of peak spending within queried range", example = "2026-10-18")
+    private LocalDate highestSpendingDate;
+
+    @Schema(description = "Cost amount incurred on peak spending day", example = "2150.00")
+    private BigDecimal highestSpendingDayCost;
+
+    @Schema(description = "Date of lowest spending within queried range", example = "2026-10-04")
+    private LocalDate lowestSpendingDate;
+
+    @Schema(description = "Cost amount incurred on lowest spending day", example = "850.25")
+    private BigDecimal lowestSpendingDayCost;
 }

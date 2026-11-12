@@ -95,7 +95,11 @@ CREATE TABLE IF NOT EXISTS billing_records (
     UNIQUE KEY uq_billing_record_dedup (organization_id, cloud_account_id, external_record_id),
     INDEX idx_billing_period (billing_period_start, billing_period_end),
     INDEX idx_billing_service (service_name),
-    INDEX idx_billing_org_account (organization_id, cloud_account_id)
+    INDEX idx_billing_org_account (organization_id, cloud_account_id),
+    INDEX idx_billing_org_period_curr (organization_id, billing_period_start, billing_period_end, currency),
+    INDEX idx_billing_org_service (organization_id, service_name),
+    INDEX idx_billing_org_region (organization_id, region),
+    INDEX idx_billing_org_currency (organization_id, currency)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -------------------------------------------------------------------

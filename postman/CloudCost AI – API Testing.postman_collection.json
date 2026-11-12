@@ -1762,6 +1762,455 @@
           }
         }
       ]
+    },
+    {
+      "name": "10. Advanced FinOps Analytics",
+      "description": "Milestone 6 Advanced FinOps Analytics, Multi-Cloud Comparison, Statistical Cost Forecasting, Budget Run-Rate, Cost Allocation, Insights, and CSV Exports",
+      "item": [
+        {
+          "name": "1. Analytics Overview",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.success).to.be.true;",
+                  "pm.expect(json.data.summary).to.be.an('object');",
+                  "pm.expect(json.data.monthOverMonth).to.be.an('object');",
+                  "pm.expect(json.data.providerDistribution).to.be.an('array');",
+                  "pm.expect(json.data.budgetHealth).to.be.an('object');",
+                  "pm.expect(json.data.currency).to.be.a('string');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/analytics/overview"
+          }
+        },
+        {
+          "name": "2. Daily Spending Trends",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.success).to.be.true;",
+                  "pm.expect(json.data.granularity).to.eql('DAILY');",
+                  "pm.expect(json.data.points).to.be.an('array');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/analytics/spending-trends?granularity=DAILY"
+          }
+        },
+        {
+          "name": "3. Weekly Spending Trends",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.success).to.be.true;",
+                  "pm.expect(json.data.granularity).to.eql('WEEKLY');",
+                  "pm.expect(json.data.points).to.be.an('array');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/analytics/spending-trends?granularity=WEEKLY"
+          }
+        },
+        {
+          "name": "4. Monthly Spending Trends",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.success).to.be.true;",
+                  "pm.expect(json.data.granularity).to.eql('MONTHLY');",
+                  "pm.expect(json.data.points).to.be.an('array');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/analytics/spending-trends?granularity=MONTHLY"
+          }
+        },
+        {
+          "name": "5. Provider Comparison",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.success).to.be.true;",
+                  "pm.expect(json.data).to.be.an('array');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/analytics/provider-comparison"
+          }
+        },
+        {
+          "name": "6. Service Breakdown",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.success).to.be.true;",
+                  "pm.expect(json.data).to.be.an('array');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/analytics/service-breakdown?limit=10"
+          }
+        },
+        {
+          "name": "7. Account Breakdown",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.success).to.be.true;",
+                  "pm.expect(json.data).to.be.an('array');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/analytics/account-breakdown"
+          }
+        },
+        {
+          "name": "8. Month-over-Month Comparison",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.success).to.be.true;",
+                  "pm.expect(json.data.currentMonth).to.be.a('string');",
+                  "pm.expect(json.data.previousMonth).to.be.a('string');",
+                  "pm.expect(json.data.direction).to.be.a('string');",
+                  "pm.expect(json.data.insights).to.be.an('array');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/analytics/month-over-month"
+          }
+        },
+        {
+          "name": "9. Seven-Day Forecast",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.success).to.be.true;",
+                  "pm.expect(json.data.horizon).to.eql('7 Days');",
+                  "pm.expect(json.data.method).to.eql('MOVING_AVERAGE');",
+                  "pm.expect(json.data.forecastData).to.be.an('array');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/analytics/forecast?horizon=7D&method=MOVING_AVERAGE"
+          }
+        },
+        {
+          "name": "10. Thirty-Day Forecast",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.success).to.be.true;",
+                  "pm.expect(json.data.horizon).to.eql('30 Days');",
+                  "pm.expect(json.data.method).to.eql('EXPONENTIAL_SMOOTHING');",
+                  "pm.expect(json.data.alpha).to.eql(0.3);",
+                  "pm.expect(json.data.forecastData).to.be.an('array');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/analytics/forecast?horizon=30D&method=EXPONENTIAL_SMOOTHING&alpha=0.3"
+          }
+        },
+        {
+          "name": "11. Ninety-Day Forecast",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.success).to.be.true;",
+                  "pm.expect(json.data.horizon).to.eql('90 Days');",
+                  "pm.expect(json.data.forecastData).to.be.an('array');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/analytics/forecast?horizon=90D&method=EXPONENTIAL_SMOOTHING"
+          }
+        },
+        {
+          "name": "12. Budget Utilization Analytics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.success).to.be.true;",
+                  "pm.expect(json.data.totalAllocatedBudget).to.not.be.undefined;",
+                  "pm.expect(json.data.overallHealthStatus).to.be.a('string');",
+                  "pm.expect(json.data.budgetBreakdowns).to.be.an('array');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/analytics/budget-utilization"
+          }
+        },
+        {
+          "name": "13. Cost Allocation",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.success).to.be.true;",
+                  "pm.expect(json.data.dimension).to.eql('PROVIDER');",
+                  "pm.expect(json.data.items).to.be.an('array');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/analytics/cost-allocation?dimension=PROVIDER"
+          }
+        },
+        {
+          "name": "14. Actionable FinOps Insights",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.success).to.be.true;",
+                  "pm.expect(json.data).to.be.an('array');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/analytics/insights"
+          }
+        },
+        {
+          "name": "15. Top Spending Services",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.success).to.be.true;",
+                  "pm.expect(json.data).to.be.an('array');",
+                  "pm.expect(json.data.length).to.be.at.most(5);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/analytics/top-spending-services?limit=5"
+          }
+        },
+        {
+          "name": "16. Top Spending Accounts",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.success).to.be.true;",
+                  "pm.expect(json.data).to.be.an('array');",
+                  "pm.expect(json.data.length).to.be.at.most(5);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/analytics/top-spending-accounts?limit=5"
+          }
+        },
+        {
+          "name": "17. Currency Filtering",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.success).to.be.true;",
+                  "pm.expect(json.data.currency).to.eql('USD');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/analytics/overview?currency=USD"
+          }
+        },
+        {
+          "name": "18. Date-Range Validation",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.success).to.be.true;"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/analytics/spending-trends?startDate=2026-01-01&endDate=2026-12-31"
+          }
+        },
+        {
+          "name": "19. Cross-Tenant Authorization Rejection (Unauthenticated)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 401 Unauthorized', function () { pm.response.to.have.status(401); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "url": "{{base_url}}/api/analytics/overview"
+          }
+        },
+        {
+          "name": "20. CSV Export - Spending Trends",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Content-Type is text/csv', function () {",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('text/csv');",
+                  "});",
+                  "pm.test('Content-Disposition header is attachment', function () {",
+                  "    pm.expect(pm.response.headers.get('Content-Disposition')).to.include('attachment');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/analytics/export/spending-trends?granularity=MONTHLY"
+          }
+        }
+      ]
     }
   ],
   "auth": {

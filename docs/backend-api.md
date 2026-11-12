@@ -1,4 +1,4 @@
-# CloudCost AI – REST API Specification (Milestone 4)
+# CloudCost AI – REST API Specification (Milestones 1–6)
 
 ## Overview & Base Configuration
 - **Base URL**: `http://localhost:8080`
@@ -150,7 +150,7 @@ All requests require `Authorization: Bearer <TOKEN>` and are scoped automaticall
 ## 5. Multi-Cloud Ingestion & Real-Time Billing APIs (Milestone 5)
 
 ### 5.1 Cloud Provider Discovery (`/api/cloud-providers`)
-- `GET /api/cloud-providers`: List all supported cloud providers (AWS, Azure, GCP) with their capabilities, reporting latency, authentication types, and IAM requirements.
+- `GET /api/cloud-providers`: List all supported cloud providers (AWS, Azure, GCP) with capabilities, reporting latency, authentication types, and IAM requirements.
 - `GET /api/cloud-providers/{provider}/capabilities`: Retrieve capabilities for a specific provider (`AWS`, `AZURE`, `GCP`).
 - `POST /api/cloud-providers/{provider}/test-connection`: Validate credentials in sandbox/mock mode or probe live API connectivity without persisting account state.
 
@@ -166,3 +166,54 @@ All requests require `Authorization: Bearer <TOKEN>` and are scoped automaticall
 - `GET /api/billing/sync/history/{syncId}`: Retrieve detailed audit information for an individual synchronization run.
 - `GET /api/billing/sync/status/{cloudAccountId}`: Check current sync health, progress, and most recent execution summary for an account.
 
+---
+
+## 6. Advanced FinOps Analytics & Cost Forecasting APIs (Milestone 6)
+
+All Milestone 6 endpoints require `Authorization: Bearer <TOKEN>` and strictly scope data to the caller's organization. Cross-tenant queries are blocked.
+
+### 6.1 Executive Overview & Trends (`/api/analytics`)
+- `GET /api/analytics/overview`: Holistic FinOps dashboard payload combining summary KPIs, month-over-month trajectory, provider distribution, budget health, and active insights. Optional `?currency=USD`.
+- `GET /api/analytics/spending-trends`: Chronological time series. Query params:
+  - `granularity`: `DAILY`, `WEEKLY`, `MONTHLY`, `QUARTERLY`, `YEARLY` (default: `MONTHLY`).
+  - `startDate`: `YYYY-MM-DD` (inclusive).
+  - `endDate`: `YYYY-MM-DD` (inclusive).
+  - `currency`: Monetary currency filter (e.g. `USD`).
+  - `provider`: Optional provider filter (`AWS`, `AZURE`, `GCP`).
+
+### 6.2 Multi-Cloud Distribution & Breakdowns
+- `GET /api/analytics/provider-comparison`: Multi-cloud expenditure distribution, percentages, and record metrics across AWS, Azure, and GCP.
+- `GET /api/analytics/service-breakdown`: Ranked expenditure grouped by cloud service with percentage contribution (`?limit=10&startDate=&endDate=&currency=`).
+- `GET /api/analytics/top-spending-services`: Quick access to top N highest-spend cloud services (`?limit=5&currency=`).
+- `GET /api/analytics/account-breakdown`: Multi-cloud spend broken down by connected cloud account (`?limit=10&startDate=&endDate=&currency=`).
+- `GET /api/analytics/top-spending-accounts`: Quick access to top N highest-spend cloud accounts (`?limit=5&currency=`).
+
+### 6.3 Month-over-Month Comparative Analytics
+- `GET /api/analytics/month-over-month`: Financial comparison between the current calendar month and previous calendar month. Includes absolute delta, percentage delta, provider breakdown, top moving services, and human-readable explainable observations (`?currency=USD`).
+
+### 6.4 Statistical Cost Forecasting Engine
+- `GET /api/analytics/forecast`: Run native Java time-series forecast models.
+  - `horizon`: `7D`, `30D`, `90D` (default: `30D`).
+  - `method`: `EXPONENTIAL_SMOOTHING` (SES) or `MOVING_AVERAGE` (MA) (default: `EXPONENTIAL_SMOOTHING`).
+  - `alpha`: Smoothing factor between `0.1` and `0.9` (default: `0.3`).
+  - `windowSize`: Rolling window size for moving average (default: `14`).
+  - `currency`: Monetary filter.
+  - Returns: Historical series, future predicted points with 95% statistical confidence bounds ($\pm 1.96 \cdot \sigma$), and model limitations.
+
+### 6.5 Budget Utilization & Run-Rate
+- `GET /api/analytics/budget-utilization`: Evaluates live spend against configured budgets, burn velocity per day, projected end-of-period spending, and risk classification (`HEALTHY`, `WARNING`, `CRITICAL`, `EXCEEDED`) (`?currency=USD`).
+
+### 6.6 Multi-Dimensional Cost Allocation
+- `GET /api/analytics/cost-allocation`: Allocate spend across architectural dimensions:
+  - `dimension`: `PROVIDER`, `ACCOUNT`, `SERVICE`, `REGION`, `TAG` (default: `SERVICE`).
+  - `startDate`, `endDate`, `currency`.
+
+### 6.7 Actionable FinOps Insights
+- `GET /api/analytics/insights`: Evaluates rule-based financial engine against actual billing records to surface prioritized recommendations with financial impact and severity levels (`CRITICAL`, `HIGH`, `MEDIUM`, `LOW`) (`?currency=USD`).
+
+### 6.8 CSV Exports
+- `GET /api/analytics/export/spending-trends`: Stream CSV attachment of trend data points.
+- `GET /api/analytics/export/provider-comparison`: Stream CSV of provider distribution.
+- `GET /api/analytics/export/service-breakdown`: Stream CSV of service cost breakdown.
+- `GET /api/analytics/export/forecast`: Stream CSV of historical actuals and forecast projections with confidence intervals.
+- `GET /api/analytics/export/insights`: Stream CSV of prioritized FinOps recommendations.
