@@ -1,5 +1,6 @@
 import React from 'react';
 import { ExternalLink, BookOpen, Code, CheckCircle, Shield } from 'lucide-react';
+import { API_BASE_URL } from '../services/api';
 
 export default function DocsPage() {
   const endpoints = [
@@ -89,7 +90,7 @@ export default function DocsPage() {
 
         <div className="flex items-center space-x-3 self-start sm:self-auto">
           <a
-            href="http://localhost:8080/swagger-ui.html"
+            href={`${API_BASE_URL}/swagger-ui.html`}
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold bg-gradient-to-r from-teal-500 to-cyan-500 text-slate-950 font-bold hover:from-teal-400 hover:to-cyan-400 transition-all shadow-lg shadow-teal-500/20"
@@ -100,7 +101,7 @@ export default function DocsPage() {
           </a>
 
           <a
-            href="http://localhost:8080/v3/api-docs"
+            href={`${API_BASE_URL}/v3/api-docs`}
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-all"

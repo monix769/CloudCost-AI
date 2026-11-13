@@ -17,6 +17,7 @@ import {
   Cpu
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { API_BASE_URL } from '../services/api';
 
 export default function HomePage() {
   const { health, rootInfo, isConnected, isDatabaseConnected, lastUpdated } = useSystem();
@@ -44,7 +45,7 @@ export default function HomePage() {
 
           <div className="pt-2 flex flex-wrap gap-3 text-xs">
             <a
-              href="http://localhost:8080/swagger-ui.html"
+              href={`${API_BASE_URL}/swagger-ui.html`}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 border border-teal-500/30 font-semibold transition-all hover:scale-105"
@@ -79,7 +80,7 @@ export default function HomePage() {
           title="Backend API Status"
           value={isConnected ? 'ONLINE' : 'CONNECTING...'}
           subtitle="Spring Boot 3.3.5 • Java 21"
-          status={isConnected ? '200 OK — localhost:8080' : 'Awaiting Connection'}
+          status={isConnected ? `200 OK — ${API_BASE_URL.replace(/^https?:\/\//, '')}` : 'Awaiting Connection'}
           badgeColor="teal"
         />
 

@@ -46,3 +46,7 @@ pnpm-debug.log*
 # Docker volumes
 mysql_data/
 docker-compose.override.yml
+
+# Generated runtime reports storage
+backend/reports_storage/
+reports_storage/

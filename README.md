@@ -51,29 +51,58 @@ The platform is designed following industry-standard software engineering best p
 
 ## 3. System Architecture
 
-CloudCost AI is organized into a clean 4-tier modular architecture:
+CloudCost AI is organized into a clean 4-tier decoupled enterprise architecture:
 
-```
-[ Browser / Client ]
-        │  (HTTP / JSON)
-        ▼
-[ Presentation Tier: React 19 + Vite + Tailwind CSS ]
-        │  (Axios Interceptor / BaseURL: http://localhost:8080)
-        ▼
-[ Security & Gateway Tier: Spring Security 6 ]
-   ├── Stateless Session FilterChain
-   └── Configured CORS Filter (Origin: http://localhost:5173)
-        ▼
-[ Application Core Tier: Spring Boot 3 + Java 21 ]
-   ├── RootController       -> GET /
-   ├── HealthController     -> GET /api/health
-   ├── StatusController     -> GET /api/status
-   ├── GlobalExceptionHandler (@RestControllerAdvice)
-   └── HealthService / StatusService / DatabaseHealthIndicatorService
-        ▼
-[ Persistence & Data Tier: Spring Data JPA + Hibernate + HikariCP ]
-        ▼
-[ Relational Database: MySQL 8.0+ (`cloudcost_ai`) ]
+```mermaid
+flowchart TD
+    subgraph ClientLayer ["1. Presentation Tier (React 19 + Vite 8)"]
+        UI["Tailwind CSS SaaS Shell"]
+        DASH["FinOps Dashboard & Analytics"]
+        ANOM["Anomaly Feed & Thresholds"]
+        OPT["Rightsizing & Savings Engine"]
+        REP["Reporting Wizard & Statements"]
+        SET["Tenant & Team Governance"]
+        AXIOS["Axios Interceptor (JWT Bearer)"]
+        UI --> DASH & ANOM & OPT & REP & SET
+        DASH & ANOM & OPT & REP & SET --> AXIOS
+    end
+
+    subgraph SecurityLayer ["2. Security & Gateway Tier (Spring Security 6)"]
+        AUTH_FILTER["JwtAuthenticationFilter"]
+        DENY_LIST["TokenDenylistService"]
+        RBAC["Method Security (@PreAuthorize)"]
+        AES["AES-256-GCM Credential Encryption"]
+        CORS["Strict CORS Filter"]
+        AXIOS -->|HTTPS / JSON| CORS
+        CORS --> AUTH_FILTER
+        AUTH_FILTER --> DENY_LIST
+        DENY_LIST --> RBAC
+    end
+
+    subgraph CoreLayer ["3. Application Core Tier (Spring Boot 3 + Java 21)"]
+        INGEST["Multi-Cloud Ingestion Pipeline\n(AWS / Azure / GCP SPI)"]
+        FINOPS["Advanced FinOps Analytics Engine\n(MoM, Trends, Allocation)"]
+        FORECAST["Statistical Forecasting Engine\n(Moving Avg & Exp Smoothing)"]
+        ANOMALY["Cost Anomaly Detection Engine\n(Z-Score, Rolling Avg, Spikes)"]
+        OPTIMIZE["Rightsizing & Savings Engine\n(Idle, Compute Matrix, Commitments)"]
+        REPORT_ENG["Enterprise Reporting Engine\n(OpenPDF & Commons CSV)"]
+        AUDIT_ENG["Append-Only Audit Trail Engine\n(Zero-Secret Redaction)"]
+
+        RBAC --> INGEST & FINOPS & FORECAST & ANOMALY & OPTIMIZE & REPORT_ENG & AUDIT_ENG
+    end
+
+    subgraph PersistenceLayer ["4. Persistence & Data Tier (Spring Data JPA + MySQL 8+)"]
+        HIKARI["HikariCP Connection Pool (20 max)"]
+        JPA["Hibernate ORM 6.5"]
+        MYSQL[("MySQL 8.0+ Enterprise Database\n(InnoDB, utf8mb4, Composite B-Tree Indexes)")]
+        STORAGE[("Isolated File Storage\nreports_storage/org_{id}/")]
+
+        INGEST & FINOPS & FORECAST & ANOMALY & OPTIMIZE & AUDIT_ENG --> JPA
+        REPORT_ENG --> STORAGE
+        REPORT_ENG --> JPA
+        JPA --> HIKARI
+        HIKARI --> MYSQL
+    end
 ```
 
 ---
@@ -338,6 +367,31 @@ npm run build
 | `GET` | `/api/notifications/unread-count`| Get unread alert notification count badge | `AUTHENTICATED` |
 | `PATCH`| `/api/notifications/{id}/read` | Mark single notification as read | `AUTHENTICATED` |
 | `POST` | `/api/notifications/read-all`| Mark all notifications as read for current organization | `AUTHENTICATED` |
+| `GET` | `/api/optimization/overview` | KPI summary of potential and realized savings | `AUTHENTICATED` |
+| `GET` | `/api/optimization/recommendations` | Filterable paginated rightsizing recommendations | `AUTHENTICATED` |
+| `GET` | `/api/optimization/recommendations/{id}` | Inspect recommendation with telemetry metrics | `AUTHENTICATED` |
+| `PATCH`| `/api/optimization/recommendations/{id}/status` | Transition recommendation lifecycle state | `AUTHENTICATED` |
+| `GET` | `/api/optimization/recommendations/{id}/history` | Retrieve chronological status audit log | `AUTHENTICATED` |
+| `GET` | `/api/optimization/savings-summary` | Savings breakdown by provider, category & resource | `AUTHENTICATED` |
+| `GET` | `/api/optimization/resource-utilization` | Monitored resource utilization telemetry list | `AUTHENTICATED` |
+| `GET` | `/api/optimization/commitment-analysis` | 1-Year and 3-Year baseline commitment models | `AUTHENTICATED` |
+| `POST` | `/api/optimization/analyze` | Trigger on-demand optimization and rightsizing scan | `AUTHENTICATED` |
+| `GET` | `/api/optimization/export` | Stream full recommendations CSV export | `AUTHENTICATED` |
+| `POST` | `/api/reports/generate` | Generate enterprise PDF or CSV financial statement | `AUTHENTICATED` |
+| `GET` | `/api/reports` | List generated report history and download metadata | `AUTHENTICATED` |
+| `GET` | `/api/reports/{id}` | Retrieve report file metadata | `AUTHENTICATED` |
+| `GET` | `/api/reports/{id}/download` | Stream and download generated report file | `AUTHENTICATED` |
+| `DELETE` | `/api/reports/{id}` | Delete generated report file and archive record | `AUTHENTICATED` |
+| `GET` | `/api/organizations/current` | Inspect tenant profile, legal name & tier | `AUTHENTICATED` |
+| `PUT` | `/api/organizations/current` | Update organization legal name | `ROLE_ADMIN` |
+| `GET` | `/api/organizations/current/members` | Retrieve organization team member roster | `AUTHENTICATED` |
+| `PUT` | `/api/organizations/current/members/{id}` | Modify member role or active status | `ROLE_ADMIN` |
+| `DELETE` | `/api/organizations/current/members/{id}` | Remove member from organization | `ROLE_ADMIN` |
+| `POST` | `/api/organizations/current/invitations` | Dispatch team member invitation | `ROLE_ADMIN` |
+| `GET` | `/api/organizations/current/invitations` | List pending and historical invitations | `ROLE_ADMIN` |
+| `DELETE` | `/api/organizations/current/invitations/{id}` | Revoke pending invitation token | `ROLE_ADMIN` |
+| `GET` | `/api/audit-logs` | Query append-only audit trail with filters | `ROLE_ADMIN` |
+| `GET` | `/api/audit-logs/{id}` | Inspect detailed audit event metadata | `ROLE_ADMIN` |
 | `GET` | `/swagger-ui.html` | Interactive Swagger UI API documentation | Public |
 | `GET` | `/v3/api-docs` | OpenAPI 3.0 raw specification JSON | Public |
 
@@ -458,6 +512,85 @@ Configure security settings in environment variables or `application.properties`
     - [x] `ReportsPage.jsx`: Interactive report generator modal, 4 quick-export template cards, generated statements history table, download triggers, and delete actions
     - [x] `SettingsPage.jsx`: Tabbed enterprise console with Organization Profile, Team & Access Control (member directory, role manager, invite modal, token copy), Enterprise Audit Log explorer, and Platform Preferences
   - [x] 100% Automated Verification: 159 JUnit 5 & Mockito Tests Passed (0 failures), 15-Request Postman Test Suite Added (Folder 13), Frontend Production Build Succeeded (0 errors)
+- [x] **Milestone 10 — Final Testing, Production Readiness & Deployment**
+  - [x] Complete Regression Testing:
+    - [x] Full backend test suite executed: `.\mvnw.cmd clean test` (159 of 159 tests passed, 0 failures, 0 errors, 0 skipped across all 9 milestones)
+    - [x] Full frontend production build verified: `npm run build` (2,179 modules transformed, 0 warnings/errors, 3.95s build time)
+    - [x] Standalone executable fat JAR verified: bootstrapped Spring Boot 3.3.5 and verified live health probe on port 8089 (`status: UP, database: CONNECTED, pingLatencyMs: 1`)
+  - [x] Security Hardening & Application Security Audit:
+    - [x] Exception masking: stack traces, exception classes, and internal binding errors strictly suppressed in production responses (`server.error.include-stacktrace=never`)
+    - [x] Database constraint masking: sanitized `DataIntegrityViolationException` to prevent leaking table/constraint internals
+    - [x] Path traversal prevention: normalized file path verification enforcing base storage bounds in `ReportService`
+    - [x] Zero-secret redaction: automated scrubbing of passwords, JWT tokens, and client secrets (`***`) in audit logging
+    - [x] Role-Based Access Control: `@PreAuthorize("hasRole('ADMIN')")` verified across administrative and audit endpoints
+    - [x] Tenant isolation: strict organization boundary enforcement on every query to prevent IDOR vulnerabilities
+    - [x] Credential security: AES-256-GCM authenticated encryption with startup cryptographic roundtrip self-test
+  - [x] Production Configuration & Performance Review:
+    - [x] Spring Boot production profile (`application-prod.properties`): HikariCP pool tuned (20 max, 5 idle), Gzip compression enabled, `validate` DDL policy
+    - [x] Frontend production readiness: dynamic `API_BASE_URL` resolution without hardcoded localhost URLs across all pages and components
+    - [x] Edge CDN & SPA routing: `frontend/vercel.json` with client-side rewrites, immutable asset caching, and security headers (`X-Frame-Options`, `X-Content-Type-Options`)
+    - [x] Multi-stage Docker configuration: `backend/Dockerfile` (Eclipse Temurin 21 JRE, non-root user), `frontend/Dockerfile` (Node 22 + Nginx 1.27 with build args), and validated `docker-compose.yml` (Compose v5 syntax verified)
+  - [x] Complete Deployment Guide (`docs/deployment-guide.md`):
+    - [x] Frontend on Vercel: import walkthrough, environment variable mapping, SPA routing, and security headers
+    - [x] Backend on Render: Docker runtime configuration, health check path `/api/health`, and environment variables catalog
+    - [x] Database on Managed MySQL 8+: schema initialization, migration procedures, and HikariCP connection parameters
+    - [x] Local containerized deployment: `docker-compose up --build -d` with automated container health probes
+
+---
+
+## 11. Production Deployment & Cloud Architecture
+
+Detailed deployment documentation is available in [`docs/deployment-guide.md`](file:///c:/Users/monis/OneDrive/Desktop/CloudCost-AI/docs/deployment-guide.md).
+
+### Quick Deployment Reference
+
+#### Frontend (Vercel)
+1. Import repository on [Vercel](https://vercel.com).
+2. Set **Root Directory** to `frontend`.
+3. Set **Framework Preset** to `Vite`.
+4. Define environment variable: `VITE_API_BASE_URL=https://<your-render-backend-url>`.
+5. Deploy. `vercel.json` automatically manages SPA rewrites and caching.
+
+#### Backend (Render)
+1. Create a new Web Service on [Render](https://render.com).
+2. Set **Root Directory** to `backend`.
+3. Set **Runtime** to `Docker` (`Dockerfile`).
+4. Set **Health Check Path** to `/api/health`.
+5. Configure environment variables:
+   - `SPRING_PROFILES_ACTIVE=prod`
+   - `DB_URL=jdbc:mysql://<host>:<port>/<db>?useSSL=true&requireSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true`
+   - `DB_USERNAME=<db_user>`
+   - `DB_PASSWORD=<db_password>`
+   - `JWT_SECRET=<64_hex_char_secret>`
+   - `CLOUD_CREDENTIAL_ENCRYPTION_KEY=<64_hex_char_key>`
+   - `CORS_ALLOWED_ORIGINS=https://<your-vercel-domain>.vercel.app`
+   - `JPA_DDL_AUTO=validate`
+
+#### Local Production-Like Execution (Docker Compose)
+```bash
+docker-compose up --build -d
+```
+Access the application at `http://localhost:3000` and the backend at `http://localhost:8080`.
+
+---
+
+## 12. Security Architecture & Compliance
+
+- **Authentication**: Stateless HMAC-SHA256 JWT with server-side token denylisting on logout.
+- **Password Protection**: BCrypt hashing with work factor 10.
+- **Tenant Isolation**: Mandatory `organization_id` scoping across all JPA queries, preventing Insecure Direct Object References (IDOR).
+- **Credential Encryption**: Authenticated AES-256-GCM cipher for cloud credentials with versioned keys and startup integrity validation.
+- **File Security**: Strict path normalization on report generation and downloads to eliminate directory traversal risks.
+- **Audit Logging**: Tamper-resistant append-only event stream with automated secret masking (`***`).
+- **Production Hardening**: Stack traces and internal exception classes are strictly suppressed from all client error envelopes.
+
+---
+
+## 13. Known Limitations & Production Considerations
+
+- **Real Provider Telemetry**: Real AWS, Azure, and GCP billing synchronization requires live IAM credentials with billing read permissions (`ce:GetCostAndUsage`, `Cost Management Reader`, BigQuery export access). In environments without live cloud credentials, the platform utilizes uploaded billing CSVs or mock providers with explicit provenance indicators (`REAL_PROVIDER` vs `CSV_UPLOAD` vs `MOCK_PROVIDER`).
+- **Background Schedulers**: Automated billing sync, anomaly scans, and rightsizing analyzers are toggleable via environment variables (`BILLING_SYNC_SCHEDULE_ENABLED`, `ANOMALY_SCHEDULE_ENABLED`, `OPTIMIZATION_SCHEDULE_ENABLED`). In single-instance deployments, atomic in-memory locking (`SyncLockManager`, `AnomalyDetectionLockManager`) guarantees single execution; in multi-node clusters, a distributed Redis or database lock is recommended.
+- **Database Migrations**: Production profiles enforce `spring.jpa.hibernate.ddl-auto=validate`. All database schema changes must be applied via SQL migration scripts (`database/schema.sql`, `milestone9_migration.sql`) prior to application deployment.
 
 
 

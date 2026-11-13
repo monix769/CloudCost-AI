@@ -3,6 +3,7 @@ import ArchitectureDiagram from '../components/ArchitectureDiagram';
 import EndpointTester from '../components/EndpointTester';
 import { Layers, ShieldCheck, CheckCircle2, Server, Database, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { API_BASE_URL } from '../services/api';
 
 export default function ArchitecturePage() {
   return (
@@ -23,7 +24,7 @@ export default function ArchitecturePage() {
 
         <div className="flex items-center space-x-2">
           <a
-            href="http://localhost:8080/swagger-ui.html"
+            href={`${API_BASE_URL}/swagger-ui.html`}
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-md"

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import apiClient from '../services/api';
+import apiClient, { API_BASE_URL } from '../services/api';
 import { Send, CheckCircle2, AlertCircle, Clock, Copy, Check } from 'lucide-react';
 
 export default function EndpointTester() {
@@ -63,7 +63,7 @@ export default function EndpointTester() {
             </span>
           </h2>
           <p className="text-xs text-slate-400 mt-1">
-            Execute real HTTP requests directly against the Spring Boot 3 backend on <span className="text-teal-400 font-mono">localhost:8080</span>
+            Execute real HTTP requests directly against the Spring Boot 3 backend on <span className="text-teal-400 font-mono">{API_BASE_URL.replace(/^https?:\/\//, '')}</span>
           </p>
         </div>
 
