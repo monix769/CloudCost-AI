@@ -1,4 +1,3 @@
-
 # CloudCost AI – Intelligent Cloud Cost Monitoring & FinOps Analytics Platform
 
 CloudCost AI is a portfolio project that demonstrates a full-stack cloud cost monitoring and FinOps analytics platform. It provides a local dashboard for managing cloud accounts, reviewing billing data, monitoring budgets, identifying unusual spending, and exploring cost-optimization recommendations.
@@ -23,6 +22,7 @@ CloudCost AI is a portfolio project that demonstrates a full-stack cloud cost mo
 ## 2. Technology Stack
 
 ### Frontend
+
 - React 19
 - Vite
 - JavaScript (ES6+)
@@ -33,6 +33,7 @@ CloudCost AI is a portfolio project that demonstrates a full-stack cloud cost mo
 - Lucide React
 
 ### Backend
+
 - Java 21
 - Spring Boot 3.3.5
 - Spring Security
@@ -43,6 +44,7 @@ CloudCost AI is a portfolio project that demonstrates a full-stack cloud cost mo
 - BCrypt password hashing
 
 ### Database and Tools
+
 - MySQL 8+
 - Docker and Docker Compose
 - Git and GitHub
@@ -86,6 +88,7 @@ Check the repository for the exact current file list.
 ### Prerequisites
 
 Install:
+
 - Java 21
 - Node.js and npm
 - MySQL 8+
@@ -268,6 +271,30 @@ For the local demonstration, start the application with Docker Compose and open:
 
 Use only the credentials configured for your local environment. Do not publish default or personal passwords in this README.
 
-## 15. License
+## 15. Application Screenshots
+
+The following screenshots showcase the CloudCost AI application interface and its major modules.
+
+### Dashboard
+
+![CloudCost AI Dashboard](docs/screenshots/dashboard.png)
+
+### Cloud Accounts
+
+![Cloud Accounts](docs/screenshots/cloud-accounts.png)
+
+### Cost Analytics
+
+![Cost Analytics](docs/screenshots/cost-analytics.png)
+
+### Anomaly Detection
+
+![Anomaly Detection](docs/screenshots/anomaly-detection.png)
+
+### Cost Optimization
+
+![Cost Optimization](docs/screenshots/cost-optimization.png)
+
+## 16. License
 
 Add a `LICENSE` file and update this section if you choose to distribute the project under a specific open-source license.
