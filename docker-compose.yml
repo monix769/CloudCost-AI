@@ -1,83 +1,119 @@
-version: '3.8'
 
 services:
-  # -------------------------------------------------------------------
-  # MySQL 8.0 Database Service
-  # -------------------------------------------------------------------
+  # ---------------------------------------------------------
+  # MySQL 8.0 Database
+  # ---------------------------------------------------------
   mysql:
     image: mysql:8.0.35
     container_name: cloudcost-mysql
     restart: unless-stopped
+
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: cloudcost_ai
+
     ports:
-      - "3306:3306"
+      - "3307:3306"
+
     volumes:
       - mysql_data:/var/lib/mysql
       - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
       - ./sample_data/seed_data.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      test:
+        - CMD
+        - mysqladmin
+        - ping
+        - -h
+        - localhost
+        - -u
+        - root
+        - -proot
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 20s
+
     networks:
       - cloudcost-network
 
-  # -------------------------------------------------------------------
-  # Spring Boot Backend Service (Java 21)
-  # -------------------------------------------------------------------
+  # ---------------------------------------------------------
+  # Spring Boot Backend (Java 21)
+  # ---------------------------------------------------------
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
+
     container_name: cloudcost-backend
     restart: unless-stopped
+
     depends_on:
       mysql:
         condition: service_healthy
+
     environment:
       SPRING_PROFILES_ACTIVE: prod
       DB_URL: jdbc:mysql://mysql:3306/cloudcost_ai?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       DB_USERNAME: root
       DB_PASSWORD: root
       PORT: 8080
+
       JWT_SECRET: ${JWT_SECRET:-404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+
       CLOUD_CREDENTIAL_ENCRYPTION_KEY: ${CLOUD_CREDENTIAL_ENCRYPTION_KEY:-0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef}
+
       CORS_ALLOWED_ORIGINS: http://localhost:5173,http://localhost:3000,http://localhost:80
+
     ports:
       - "8080:8080"
+
+    # Checks whether the backend is listening on port 8080.
+    # Does not require curl or wget.
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      test:
+        - CMD-SHELL
+        - grep -q ':1F90 ' /proc/net/tcp /proc/net/tcp6
       interval: 15s
       timeout: 5s
       retries: 5
+      start_period: 60s
+
     networks:
       - cloudcost-network
 
-  # -------------------------------------------------------------------
-  # React + Vite Frontend Service (Nginx)
-  # -------------------------------------------------------------------
+  # ---------------------------------------------------------
+  # React Frontend (Nginx)
+  # ---------------------------------------------------------
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      args:
-        VITE_API_BASE_URL: http://localhost:8080
+
     container_name: cloudcost-frontend
     restart: unless-stopped
+
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+
     ports:
       - "3000:80"
+
     networks:
       - cloudcost-network
 
+# ---------------------------------------------------------
+# Persistent Storage
+# ---------------------------------------------------------
 volumes:
   mysql_data:
     driver: local
 
+# ---------------------------------------------------------
+# Docker Network
+# ---------------------------------------------------------
 networks:
   cloudcost-network:
     driver: bridge
